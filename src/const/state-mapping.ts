@@ -1,16 +1,22 @@
 import { localize } from '../localize/localize';
 
-const createState = (locked: string, unlocked: string, lang: string) => ({
-  state: { false: localize(locked, lang), true: localize(unlocked, lang) },
-});
+/**
+ * State-string translators for VAG Connect entity values.
+ *
+ * Sources:
+ *   - sensor.py     translation_keys (charging_state, plug_state, vehicle_state,
+ *                   connection_state, charging_type)
+ *   - binary_sensor binary on/off semantics (doors_locked, plug_connected,
+ *                   is_charging, is_online, lights_on, warning_*)
+ *   - strings.json  (HA-side translation table for state values)
+ *
+ * The exported helpers (lockStates, doorStatus, ignitionState, …) keep
+ * the same names as the Mercedes layout so vag-connect-card.ts can
+ * render them without rewiring. The mapping bodies were rebuilt for
+ * VAG semantics.
+ */
 
-const createNameState = (nameKey: string, locked: string, unlocked: string, lang: string) => ({
-  name: localize(nameKey, lang),
-  ...createState(locked, unlocked, lang),
-});
-
-const createNameStateWithMap = (nameKey: string, stateMap: { [key: string]: string }, lang: string) => ({
-  name: localize(nameKey, lang),
+const createStateMap = (stateMap: { [key: string]: string }, lang: string) => ({
   state: Object.keys(stateMap).reduce(
     (acc, key) => {
       acc[key] = localize(stateMap[key], lang);
@@ -20,170 +26,205 @@ const createNameStateWithMap = (nameKey: string, stateMap: { [key: string]: stri
   ),
 });
 
-const createDoorStatus = (lang: string) => ({
-  '0': localize('card.common.stateOpen', lang),
-  '1': localize('card.common.stateClosed', lang),
-  '2': localize('card.common.stateNotExisting', lang),
-  '3': localize('card.common.stateUnknown', lang),
+const createNameStateMap = (nameKey: string, stateMap: { [key: string]: string }, lang: string) => ({
+  name: localize(nameKey, lang),
+  ...createStateMap(stateMap, lang),
 });
 
-export const doorStatus = createDoorStatus;
+// --- Lock / Doors / Windows ------------------------------------------------
 
-const createLockStates = (lang: string) => ({
-  '0': localize('card.common.stateUnlocked', lang),
-  '1': localize('card.common.stateLockedInt', lang),
-  '2': localize('card.common.stateLocked', lang),
-  '3': localize('card.common.statePartlyUnlocked', lang),
-  '4': localize('card.common.stateUnknown', lang),
+/** Sensor `doors_locked` (binary): on=unlocked, off=locked. */
+export const lockStates = (lang: string) => ({
+  on: localize('card.common.stateUnlocked', lang),
+  off: localize('card.common.stateLocked', lang),
 });
 
-const createChargeSelectedProgram = (lang: string) => ({
-  '0': 'Standard',
-  '1': localize('card.common.stateUnknown', lang),
-  '2': 'Home',
-  '3': 'Work',
+/** Sensor `doors_open` / `windows_open` (binary): on=open, off=closed. */
+export const doorStatus = (lang: string) => ({
+  on: localize('card.common.stateOpen', lang),
+  off: localize('card.common.stateClosed', lang),
 });
 
-const createStarterBattery = (lang: string) => ({
-  '0': localize('card.starterBattery.stateOk', lang),
-  '1': localize('card.starterBattery.partlyCharged', lang),
-  '2': localize('card.starterBattery.notAvailable', lang),
-  '3': localize('card.starterBattery.remoteServiceDisabled', lang),
-  '4': localize('card.starterBattery.vehicleNoLongerAvailable', lang),
-});
+// --- Charging / Plug -------------------------------------------------------
 
-export const lockAttributes = (lang: string) => ({
-  doorlockstatusfrontleft: createNameState(
-    'card.lockAttributes.doorlockstatusfrontleft',
-    'card.common.stateLocked',
-    'card.common.stateUnlocked',
-    lang
-  ),
-  doorlockstatusfrontright: createNameState(
-    'card.lockAttributes.doorlockstatusfrontright',
-    'card.common.stateLocked',
-    'card.common.stateUnlocked',
-    lang
-  ),
-  doorlockstatusrearleft: createNameState(
-    'card.lockAttributes.doorlockstatusrearleft',
-    'card.common.stateLocked',
-    'card.common.stateUnlocked',
-    lang
-  ),
-  doorlockstatusrearright: createNameState(
-    'card.lockAttributes.doorlockstatusrearright',
-    'card.common.stateLocked',
-    'card.common.stateUnlocked',
-    lang
-  ),
-  doorlockstatusgas: createNameState(
-    'card.lockAttributes.doorlockstatusgas',
-    'card.common.stateLocked',
-    'card.common.stateUnlocked',
-    lang
-  ),
-});
-
-export const doorAttributes = (lang: string) => ({
-  decklidstatus: createNameState(
-    'card.doorAttributes.decklidstatus',
-    'card.common.stateClosed',
-    'card.common.stateOpen',
-    lang
-  ),
-  doorstatusfrontleft: createNameState(
-    'card.doorAttributes.doorstatusfrontleft',
-    'card.common.stateClosed',
-    'card.common.stateOpen',
-    lang
-  ),
-  doorstatusfrontright: createNameState(
-    'card.doorAttributes.doorstatusfrontright',
-    'card.common.stateClosed',
-    'card.common.stateOpen',
-    lang
-  ),
-  doorstatusrearleft: createNameState(
-    'card.doorAttributes.doorstatusrearleft',
-    'card.common.stateClosed',
-    'card.common.stateOpen',
-    lang
-  ),
-  doorstatusrearright: createNameState(
-    'card.doorAttributes.doorstatusrearright',
-    'card.common.stateClosed',
-    'card.common.stateOpen',
-    lang
-  ),
-  enginehoodstatus: createNameState(
-    'card.doorAttributes.enginehoodstatus',
-    'card.common.stateClosed',
-    'card.common.stateOpen',
-    lang
-  ),
-  chargeflapdcstatus: createNameStateWithMap(
-    'card.doorAttributes.chargeflapdcstatus',
+/** sensor.<vin>_charging_state — Skoda/Audi/VW string values. */
+export const chargingState = (lang: string) =>
+  createStateMap(
     {
-      '0': 'card.common.stateOpen',
-      '1': 'card.common.stateClosed',
-      '2': 'card.common.statePressed',
-      '3': 'card.common.stateUnknown',
-    },
-    lang
-  ),
-});
-
-export const lockStates = createLockStates;
-export const starterBattery = createStarterBattery;
-export const chargeSelectedProgram = createChargeSelectedProgram;
-
-const createWindowStatus = (nameKey: string, lang: string) =>
-  createNameStateWithMap(
-    nameKey,
-    {
-      '2': 'card.common.stateClosed',
-      '0': 'card.common.stateOpen',
+      charging: 'card.chargingState.charging',
+      not_charging: 'card.chargingState.notCharging',
+      ready_for_charging: 'card.chargingState.readyForCharging',
+      conservation: 'card.chargingState.conservation',
+      error: 'card.common.stateUnknown',
+      off: 'card.chargingState.off',
+      unsupported: 'card.common.stateUnknown',
     },
     lang
   );
 
-export const windowAttributes = (lang: string) => ({
-  windowstatusrearleft: createWindowStatus('card.windowAttributes.windowstatusrearleft', lang),
-  windowstatusrearright: createWindowStatus('card.windowAttributes.windowstatusrearright', lang),
-  windowstatusfrontleft: createWindowStatus('card.windowAttributes.windowstatusfrontleft', lang),
-  windowstatusfrontright: createWindowStatus('card.windowAttributes.windowstatusfrontright', lang),
-  windowstatusrearleftblind: createWindowStatus('card.windowAttributes.windowstatusrearleftblind', lang),
-  windowstatusrearrightblind: createWindowStatus('card.windowAttributes.windowstatusrearrightblind', lang),
-  windowstatusfrontleftblind: createWindowStatus('card.windowAttributes.windowstatusfrontleftblind', lang),
-  windowstatusfrontrightblind: createWindowStatus('card.windowAttributes.windowstatusfrontrightblind', lang),
-  sunroofstatus: createNameStateWithMap(
-    'card.doorAttributes.sunroofstatus',
+/** sensor.<vin>_plug_state — connected / disconnected / locked. */
+export const plugState = (lang: string) =>
+  createStateMap(
     {
-      '0': 'card.sunroofState.stateClosed',
-      '1': 'card.sunroofState.stateOpen',
-      '2': 'card.sunroofState.liftingOpen',
-      '3': 'card.sunroofState.running',
-      '4': 'card.sunroofState.antiBoomingPosition',
-      '5': 'card.sunroofState.slidingIntermediate',
-      '6': 'card.sunroofState.liftingIntermediate',
-      '7': 'card.sunroofState.opening',
-      '8': 'card.sunroofState.closing',
-      '9': 'card.sunroofState.antiBoomingLifting',
-      '10': 'card.sunroofState.intermediatePosition',
-      '11': 'card.sunroofState.openingLifting',
-      '12': 'card.sunroofState.closingLifting',
+      connected: 'card.plugState.connected',
+      disconnected: 'card.plugState.disconnected',
+      invalid: 'card.common.stateUnknown',
     },
+    lang
+  );
+
+/** sensor.<vin>_charging_type — ac / dc / off. */
+export const chargingType = (lang: string) =>
+  createStateMap(
+    {
+      ac: 'card.chargingType.ac',
+      dc: 'card.chargingType.dc',
+      off: 'card.chargingType.off',
+      invalid: 'card.common.stateUnknown',
+    },
+    lang
+  );
+
+/** sensor.<vin>_climatisation_state — heating / cooling / off / ventilation. */
+export const climatisationState = (lang: string) =>
+  createStateMap(
+    {
+      heating: 'card.climateState.heating',
+      cooling: 'card.climateState.cooling',
+      ventilation: 'card.climateState.ventilation',
+      off: 'card.climateState.off',
+      invalid: 'card.common.stateUnknown',
+    },
+    lang
+  );
+
+/** sensor.<vin>_connection_state — online / offline / waking / unknown. */
+export const connectionState = (lang: string) =>
+  createStateMap(
+    {
+      online: 'card.connectionState.online',
+      offline: 'card.connectionState.offline',
+      waking: 'card.connectionState.waking',
+      unknown: 'card.common.stateUnknown',
+    },
+    lang
+  );
+
+/** sensor.<vin>_vehicle_state — parked / driving / charging / climatizing. */
+export const vehicleState = (lang: string) =>
+  createStateMap(
+    {
+      parked: 'card.vehicleState.parked',
+      driving: 'card.vehicleState.driving',
+      charging: 'card.vehicleState.charging',
+      climatizing: 'card.vehicleState.climatizing',
+      ready: 'card.vehicleState.ready',
+      unknown: 'card.common.stateUnknown',
+    },
+    lang
+  );
+
+// --- Door / Window per-position attribute tables ---------------------------
+//
+// VAG Connect aggregates doors/windows into single binary sensors
+// (doors_open / windows_open) and exposes per-position state as
+// `extra_state_attributes.detail` (an object: front_left, front_right,
+// rear_left, rear_right, hood, trunk, sunroof — each open/closed/unknown).
+// These tables let the sub-card view label each row.
+
+export const doorAttributes = (lang: string) => ({
+  front_left: createNameStateMap(
+    'card.doorAttributes.frontLeft',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed' },
+    lang
+  ),
+  front_right: createNameStateMap(
+    'card.doorAttributes.frontRight',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed' },
+    lang
+  ),
+  rear_left: createNameStateMap(
+    'card.doorAttributes.rearLeft',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed' },
+    lang
+  ),
+  rear_right: createNameStateMap(
+    'card.doorAttributes.rearRight',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed' },
+    lang
+  ),
+  trunk: createNameStateMap(
+    'card.doorAttributes.trunk',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed' },
+    lang
+  ),
+  hood: createNameStateMap(
+    'card.doorAttributes.hood',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed' },
+    lang
+  ),
+  sunroof: createNameStateMap(
+    'card.doorAttributes.sunroof',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed' },
     lang
   ),
 });
 
-const createIgnitionState = (lang: string) => ({
-  '0': localize('card.ignitionState.ignitionLock', lang),
-  '1': localize('card.ignitionState.ignitionOff', lang),
-  '2': localize('card.ignitionState.ignitionAccessory', lang),
-  '4': localize('card.ignitionState.ignitionOn', lang),
-  '5': localize('card.ignitionState.ignitionStart', lang),
+export const lockAttributes = (lang: string) => ({
+  front_left: createNameStateMap(
+    'card.lockAttributes.frontLeft',
+    { unlocked: 'card.common.stateUnlocked', locked: 'card.common.stateLocked' },
+    lang
+  ),
+  front_right: createNameStateMap(
+    'card.lockAttributes.frontRight',
+    { unlocked: 'card.common.stateUnlocked', locked: 'card.common.stateLocked' },
+    lang
+  ),
+  rear_left: createNameStateMap(
+    'card.lockAttributes.rearLeft',
+    { unlocked: 'card.common.stateUnlocked', locked: 'card.common.stateLocked' },
+    lang
+  ),
+  rear_right: createNameStateMap(
+    'card.lockAttributes.rearRight',
+    { unlocked: 'card.common.stateUnlocked', locked: 'card.common.stateLocked' },
+    lang
+  ),
 });
 
-export const ignitionState = createIgnitionState;
+export const windowAttributes = (lang: string) => ({
+  front_left: createNameStateMap(
+    'card.windowAttributes.frontLeft',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed', ventilation: 'card.windowState.ventilation' },
+    lang
+  ),
+  front_right: createNameStateMap(
+    'card.windowAttributes.frontRight',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed', ventilation: 'card.windowState.ventilation' },
+    lang
+  ),
+  rear_left: createNameStateMap(
+    'card.windowAttributes.rearLeft',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed', ventilation: 'card.windowState.ventilation' },
+    lang
+  ),
+  rear_right: createNameStateMap(
+    'card.windowAttributes.rearRight',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed', ventilation: 'card.windowState.ventilation' },
+    lang
+  ),
+  sunroof: createNameStateMap(
+    'card.windowAttributes.sunroof',
+    { open: 'card.common.stateOpen', closed: 'card.common.stateClosed', tilt: 'card.windowState.tilt' },
+    lang
+  ),
+});
+
+// --- Legacy Mercedes shims --------------------------------------------------
+// Kept as no-ops so vehicle-info-card.ts (still mid-migration) keeps
+// compiling. They will be removed in Phase C-2 when the main entry
+// stops calling them.
+export const ignitionState = (lang: string) => createStateMap({}, lang);
+export const starterBattery = (lang: string) => createStateMap({}, lang);
+export const chargeSelectedProgram = (lang: string) => createStateMap({}, lang);

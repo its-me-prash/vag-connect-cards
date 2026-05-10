@@ -1,303 +1,211 @@
 {
-    "name": "French",
-    "nativeName": "Français",
-    "card": {
-        "common": {
-            "lastUpdate": "Dernière mise à jour",
-            "stateCharging": "En charge",
-            "stateClosed": "Fermé",
-            "stateLocked": "Verrouillé",
-            "stateLockedInt": "Verrouillage int.",
-            "stateNotExisting": "Inexistant",
-            "stateOpen": "Ouvert",
-            "stateParkBrakeOff": "Désactivé",
-            "stateParkBrakeOn": "Activé",
-            "statePartlyUnlocked": "Partiellement déverrouillé",
-            "stateUnknown": "Inconnu",
-            "stateUnlocked": "Déverrouillé",
-            "statePressed": "Appuyé",
-            "titleRemoteControl": "Télécommande",
-            "titleServices": "Services",
-            "toastCommandSent": "Commande envoyée avec succès !",
-            "toastImageError": "Erreur lors du téléchargement de l'image. Seuls les fichiers PNG et JPEG sont autorisés.",
-            "toastCardAlreadyExists": "La carte existe déjà"
-        },
-        "cardType": {
-            "ecoCards": "Affichage ECO",
-            "tripCards": "Trajet",
-            "tyreCards": "Pression pneus",
-            "vehicleCards": "État véhicule"
-        },
-        "chargingOverview": {
-            "chargingPower": "En charge",
-            "maxSoc": "État Maximal",
-            "selectedProgram": "Programme",
-            "soc": "État actuel"
-        },
-        "doorAttributes": {
-            "decklidstatus": "Coffre arrière",
-            "doorstatusfrontleft": "Porte avant gauche",
-            "doorstatusfrontright": "Porte avant droite",
-            "doorstatusrearleft": "Porte arrière gauche",
-            "doorstatusrearright": "Porte arrière droite",
-            "enginehoodstatus": "Capot moteur",
-            "sunroofstatus": "Toit ouvrant",
-            "chargeflapdcstatus": "Trappe de charge"
-        },
-        "ecoCard": {
-            "ecoDisplay": "Affichage ECO",
-            "ecoScore": "Résultats",
-            "ecoScoreAcceleration": "Accélération",
-            "ecoScoreBonusRange": "Autonomie bonus",
-            "ecoScoreConstant": "Régularité",
-            "ecoScoreFreeWheel": "Décélérer"
-        },
-        "lockAttributes": {
-            "doorlockstatusfrontleft": "Porte avant gauche",
-            "doorlockstatusfrontright": "Porte avant droit",
-            "doorlockstatusgas": "Trappe carburant",
-            "doorlockstatusrearleft": "Porte arrière gauche",
-            "doorlockstatusrearright": "Porte arrière droit"
-        },
-        "serviceData": {
-            "labelChargeProgram": "Programme de charge",
-            "labelCity": "Ville",
-            "labelClose": "Fermer",
-            "labelDepartureTime": "Heure de départ",
-            "labelDurationTime": "Durée",
-            "labelLatitude": "Latitude",
-            "labelLockCar": "Verrouillage véhicule",
-            "labelLongitude": "Longitude",
-            "labelMaxStateOfCharge": "État de charge max.",
-            "labelMoreInfo": "Plus d'infos",
-            "labelMove": "Déplacer",
-            "labelNoSelection": "Aucune sélection",
-            "labelOpen": "Ouvrir",
-            "labelPostCode": "Code postal",
-            "labelSave": "Enregistrer",
-            "labelSend": "Envoyer",
-            "labelSetMaxSoc": "Définir le maximum",
-            "labelSetProgram": "Définir le programme",
-            "labelStart": "Démarrer",
-            "labelStartTime": "Heure de début",
-            "labelStop": "Arrêter",
-            "labelStopTime": "Heure de fin",
-            "labelStreet": "Rue",
-            "labelTilt": "Inclinaison",
-            "labelTime1": "Durée 1",
-            "labelTime2": "Durée 2",
-            "labelTime3": "Durée 3",
-            "labelTimeSelection": "Sélection du temps",
-            "labelTitle": "Titre",
-            "labelUnlockCar": "Déverrouiller véhicule",
-            "labelWindowFrontLeft": "Avant gauche",
-            "labelWindowFrontRight": "Avant droit",
-            "labelWindowRearLeft": "Arrière gauche",
-            "labelWindowRearRight": "Arrière droit",
-            "labelSeatConfig": "Enregistrer la position des sièges",
-            "labelSetTempZone": "Enregistrer la zone de température",
-            "labelPreclimateStatus": "Situation préclimatique"
-        },
-        "servicesCtrl": {
-            "auxheat": "Chauffage auxiliaire",
-            "charge": "Charge",
-            "doorsLock": "Sécurité",
-            "engine": "Contrôle moteur",
-            "preheat": "Pré-chauffage",
-            "sendRoute": "Envoyer itinéraire",
-            "sigPos": "Signal position",
-            "sunroof": "Toit ouvrant",
-            "windows": "Vitres"
-        },
-        "starterBattery": {
-            "notAvailable": "Non disponible",
-            "partlyCharged": "Partiellement chargé",
-            "remoteServiceDisabled": "Service à distance désactivé",
-            "stateOk": "OK",
-            "vehicleNoLongerAvailable": "Véhicule non disponible"
-        },
-        "sunroofState": {
-            "antiBoomingLifting": "Déflecteur d'air levé",
-            "antiBoomingPosition": "Position anti-bruit d'air",
-            "closing": "Fermeture",
-            "closingLifting": "Fermeture mode incliné",
-            "intermediatePosition": "Position intermédiaire",
-            "liftingIntermediate": "Mode incliné partiel",
-            "liftingOpen": "Ouverture mode incliné",
-            "opening": "Ouverture",
-            "openingLifting": "Inclinaison en cours",
-            "running": "En cours",
-            "slidingIntermediate": "Ouverture partielle",
-            "stateClosed": "Fermé",
-            "stateOpen": "Ouvert"
-        },
-        "tripCard": {
-            "adBlueLevel": "Niveau AdBlue",
-            "averageSpeedReset": "Vitesse moyenne",
-            "averageSpeedStart": "Vitesse moyenne",
-            "distanceReset": "Distance parcourue",
-            "distanceStart": "Distance parcourue",
-            "distanceZEReset": "Électrique uniquement",
-            "distanceZEStart": "Électrique uniquement",
-            "drivenTimeReset": "Temps de trajet",
-            "drivenTimeStart": "Temps de trajet",
-            "drivenTimeZEReset": "Temps de trajet en électrique",
-            "drivenTimeZEStart": "Temps de trajet en électrique",
-            "electricConsumptionReset": "Consommation électrique",
-            "electricConsumptionStart": "Consommation électrique",
-            "fromReset": "Depuis la remise à zéro",
-            "fromStart": "Depuis le départ",
-            "fuelLevel": "Niveau de carburant",
-            "liquidConsumptionReset": "Consommation carburant",
-            "liquidConsumptionStart": "Consommation carburant",
-            "maxSoc": "État de charge max.",
-            "odometer": "Kilométrage",
-            "overview": "Vue d'ensemble",
-            "rangeElectric": "Autonomie de la batterie",
-            "rangeLiquid": "Autonomie totale",
-            "soc": "Niveau de batterie"
-        },
-        "tyreCard": {
-            "tirePressureFrontLeft": "Avant gauche",
-            "tirePressureFrontRight": "Avant droit",
-            "tirePressureRearLeft": "Arrière gauche",
-            "tirePressureRearRight": "Arrière droit",
-            "tireWarningOk": "Aucune perte de pression détectée",
-            "tireWarningProblem": "Perte de pression détectée! Vérifiez les pneus.",
-            "tyrePressure": "Pression des pneus"
-        },
-        "vehicleCard": {
-            "doorStatusOverall": "Portes",
-            "engineLight": "Voyant moteur",
-            "ignitionState": "État de l'allumage",
-            "lockSensor": "État du verrouillage",
-            "lowBrakeFluid": "Liquide de frein",
-            "lowCoolantLevel": "Liquide de refroidissement",
-            "lowWashWater": "Liquide lave-glace",
-            "parkBrake": "Frein de stationnement",
-            "starterBatteryState": "Batterie de démarrage",
-            "tirePressureWarning": "Pression des pneus !",
-            "vehicleStatus": "État du véhicule",
-            "vehicleWarnings": "Avertissements",
-            "windowsClosed": "Vitres"
-        },
-        "windowAttributes": {
-            "windowstatusfrontleft": "Vitre avant gauche",
-            "windowstatusfrontleftblind": "Store pare-soleil avant gauche",
-            "windowstatusfrontright": "Vitre avant droite",
-            "windowstatusfrontrightblind": "Store pare-soleil avant droit",
-            "windowstatusrearleft": "Vitre arrière gauche",
-            "windowstatusrearleftblind": "Store pare-soleil arrière gauche",
-            "windowstatusrearright": "Vitre arrière droite",
-            "windowstatusrearrightblind": "Store pare-soleil arrière droit"
-        },
-        "ignitionState": {
-            "ignitionLock": "Verrouillage",
-            "ignitionOff": "Éteint",
-            "ignitionAccessory": "Accessoire",
-            "ignitionOn": "Allumé",
-            "ignitionStart": "Démarrage"
-        },
-        "precondSeatTemp": {
-            "frontLeft": "Avant gauche",
-            "frontRight": "Avant droit",
-            "rearLeft": "Arrière gauche",
-            "rearRight": "Arrière droit"
-        }
+  "name": "French",
+  "nativeName": "Français",
+  "card": {
+    "common": {
+      "vehicle": "Véhicule",
+      "lastUpdate": "Dernière mise à jour",
+      "stateCharging": "En charge",
+      "stateClosed": "Fermé",
+      "stateLocked": "Verrouillé",
+      "stateLockedInt": "Verrouillé (intérieur)",
+      "stateNotExisting": "Non disponible",
+      "stateOpen": "Ouvert",
+      "stateParkBrakeOff": "Relâché",
+      "stateParkBrakeOn": "Serré",
+      "statePartlyUnlocked": "Partiellement déverrouillé",
+      "stateUnknown": "Inconnu",
+      "stateUnlocked": "Déverrouillé",
+      "statePressed": "Appuyé",
+      "titleRemoteControl": "Télécommande",
+      "titleServices": "Services",
+      "toastCommandSent": "Commande envoyée",
+      "toastCardAlreadyExists": "Une carte avec ce nom existe déjà",
+      "toastImageError": "Échec du chargement de l'image"
     },
-    "editor": {
-        "entityConfig": {
-            "desc": "Choisissez l’entité et le nom de la carte.",
-            "title": "Entité et nom de la carte"
-        },
-        "buttonConfig": {
-            "desc": "Configurer les cartes secondaires pour chaque bouton.",
-            "title": "Configuration des boutons",
-            "defaultCards": "Cartes par défaut",
-            "customCards": "Cartes personnalisées",
-            "addNewCard": "Ajouter une nouvelle carte",
-            "hideButton": "Masquer le bouton sur la carte",
-            "useCustomButton": "Utiliser un bouton personnalisé",
-            "useCustomCard": "Utiliser une carte personnalisée",
-            "showButton": "Afficher le bouton",
-            "preview": "Aperçu",
-            "hidePreview": "Masquer l'aperçu",
-            "secondaryInfo": "Informations secondaires",
-            "secondaryInfoDesc": "Cela sera affiché sous le titre de la carte.",
-            "secondaryInfoHelper": "Utiliser le modèle Jinja2 pour afficher des informations secondaires",
-            "notifyInfo": "Configuration des notifications",
-            "notifyInfoHelper": "Le résultat doit renvoyer 'True' pour afficher la notification.",
-            "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette carte?",
-            "toastNewCard": "Nouvelle carte ajoutée !",
-            "buttonGridSwipe": "Configuration de la grille de boutons",
-            "swipeRows": "Lignes par diapositive",
-            "useButtonSwipe": "Utiliser le glisser pour les boutons",
-            "iconInfo": "Modèle d'icône",
-            "iconInfoHelper": "Utiliser un modèle Jinja2 pour afficher l'icône",
-            "colorInfo": "Modèle de couleur",
-            "colorInfoHelper": "Utiliser un modèle Jinja2 pour modifier la couleur de l'icône",
-            "pictureInfo": "Image (remplacera l’icône)",
-            "pictureInfoHelper": "Vous pouvez utiliser un modèle pour afficher une image ou une URL vers un fichier image"
-        },
-        "common": {
-            "checkAll": "Tout cocher",
-            "infoButton": "Sélectionner la carte à configurer.",
-            "infoImages": "Il n'est pas nécessaire d'ajouter un '-' pour chaque ligne. Chaque ligne sera traitée comme une URL séparée automatiquement.",
-            "infoMap": "Configuration pour la popup de carte.",
-            "infoServices": "Choisir les services à activer. Si un service est désactivé, il ne sera pas affiché dans la carte.",
-            "uncheckAll": "Tout décocher"
-        },
-        "imagesConfig": {
-            "desc": "Ajouter les URL des images.",
-            "title": "Configuration image",
-            "selectAll": "Tout sélectionner",
-            "deselectAll": "Tout désélectionner",
-            "deleteSelected": "Supprimer la sélection"
-        },
-        "mapConfig": {
-            "desc": "Choisir la configuration de la carte",
-            "title": "Configuration de la carte"
-        },
-        "servicesConfig": {
-            "desc": "Choisir les services à activer.",
-            "title": "Configuration des services"
-        },
-        "showConfig": {
-            "desc": "Choisir les éléments à afficher.",
-            "title": "Afficher la configuration"
-        },
-        "showOpts": {
-            "enable_map_popup": "Activer le popup carte",
-            "enable_services_control": "Activer les services",
-            "show_background": "Afficher l'arrière plan ",
-            "show_buttons": "Afficher les boutons",
-            "show_error_notify": "Afficher les notifications d'erreurs",
-            "show_map": "Afficher la carte",
-            "show_slides": "Afficher le slide",
-            "show_header_info": "Afficher les informations d’en-tête",
-            "show_address": "Afficher l’adresse"
-        },
-        "themeLangConfig": {
-            "desc": "Choisir le thème et la langue.",
-            "title": "Thèmes & Langage"
-        },
-        "customButtonConfig": {
-            "title": "Bouton personnalisé",
-            "desc": "Définir la valeur du bouton personnalisé",
-            "info": "Ajouter un nouveau ou modifier un bouton personnalisé existant"
-        },
-        "customCardConfig": {
-            "title": "Carte personnalisée",
-            "desc": "Configuration YAML pour la carte Lovelace"
-        },
-        "customTireBackground": {
-            "title": "Personnalisation arrière-plan vue pneus",
-            "desc": "Télécharger une image pour remplacer l'arrière-plan par défaut.",
-            "info": "L'image doit être carrée et avoir une résolution maximale de 450x450 pixels. Un arrière-plan transparent est recommandé."
-        },
-        "customActionConfig": {
-            "title": "Bouton interaction",
-            "desc": "Définir l'action du bouton personnalisé"
-        }
+    "cardType": {
+      "tripCards": "Trajet & Autonomie",
+      "vehicleCards": "État du véhicule",
+      "ecoCards": "Service",
+      "tyreCards": "Batterie & Charge"
+    },
+    "tripCard": {
+      "overview": "Aperçu",
+      "lastTrip": "Dernier trajet",
+      "odometer": "Compteur",
+      "rangeTotal": "Autonomie totale",
+      "rangeElectric": "Autonomie électrique",
+      "rangeCombustion": "Autonomie thermique",
+      "fuelLevel": "Niveau de carburant",
+      "adblueRange": "Autonomie AdBlue",
+      "soc": "État de charge",
+      "targetSoc": "SoC cible",
+      "lastTripDistance": "Distance",
+      "lastTripAvgSpeed": "Vitesse moyenne",
+      "lastTripAvgFuelConsumption": "Consommation carburant",
+      "lastTripAvgElectricConsumption": "Consommation électrique",
+      "outsideTemp": "Température extérieure",
+      "batteryTemp": "Température batterie"
+    },
+    "vehicleCard": {
+      "vehicleStatus": "État du véhicule",
+      "vehicleWarnings": "Avertissements",
+      "doorsLocked": "Portes verrouillées",
+      "doorsOpen": "Portes",
+      "windowsOpen": "Fenêtres",
+      "plugConnected": "Câble de charge",
+      "lightsOn": "Feux",
+      "isOnline": "En ligne",
+      "warning12vLow": "Batterie 12 V faible",
+      "warningActive": "Avertissement actif",
+      "warningOil": "Huile",
+      "warningTyre": "Pression pneus",
+      "warningBrakes": "Freins",
+      "warningEngine": "Moteur"
+    },
+    "ecoCard": {
+      "serviceTitle": "Entretien",
+      "diagnosticsTitle": "Diagnostic",
+      "serviceDueInDays": "Entretien dû (jours)",
+      "serviceKm": "Entretien dû (km)",
+      "oilServiceDueInDays": "Vidange (jours)",
+      "oilServiceKm": "Vidange (km)",
+      "voltage12v": "Tension 12 V",
+      "softwareVersion": "Version logicielle",
+      "otaUpdateAvailable": "Mise à jour OTA",
+      "requestsRemaining": "Quota API restant",
+      "wakeCountToday": "Réveils aujourd'hui",
+      "connectionState": "Connexion",
+      "lastUpdatedAt": "Dernière communication"
+    },
+    "tyreCard": {
+      "batteryTitle": "Batterie",
+      "target": "Cible",
+      "chargingOverview": "Aperçu de la charge",
+      "chargingDetails": "Détails de la charge",
+      "chargingPower": "Puissance de charge",
+      "chargingRate": "Vitesse de charge",
+      "chargingType": "Type de charge",
+      "chargeCompleteEta": "Charge complète à",
+      "maxChargeCurrent": "Courant max",
+      "totalChargedEnergy": "Énergie totale chargée"
+    },
+    "chargingOverview": {
+      "soc": "État de charge",
+      "targetSoc": "SoC cible",
+      "chargingState": "État de charge",
+      "plugState": "État du câble"
+    },
+    "climateOverview": {
+      "climatisationState": "Climatisation",
+      "targetTemperature": "Température cible"
+    },
+    "chargingState": {
+      "charging": "En charge",
+      "notCharging": "Pas en charge",
+      "readyForCharging": "Prêt à charger",
+      "conservation": "Conservation",
+      "off": "Arrêt"
+    },
+    "plugState": {
+      "connected": "Connecté",
+      "disconnected": "Déconnecté"
+    },
+    "chargingType": {
+      "ac": "AC",
+      "dc": "DC",
+      "off": "Arrêt"
+    },
+    "climateState": {
+      "heating": "Chauffage",
+      "cooling": "Climatisation",
+      "ventilation": "Ventilation",
+      "off": "Arrêt"
+    },
+    "connectionState": {
+      "online": "En ligne",
+      "offline": "Hors ligne",
+      "waking": "Réveil"
+    },
+    "vehicleState": {
+      "parked": "Stationné",
+      "driving": "En conduite",
+      "charging": "En charge",
+      "climatizing": "Climatisation",
+      "ready": "Prêt"
+    },
+    "doorAttributes": {
+      "frontLeft": "Avant gauche",
+      "frontRight": "Avant droit",
+      "rearLeft": "Arrière gauche",
+      "rearRight": "Arrière droit",
+      "trunk": "Coffre",
+      "hood": "Capot",
+      "sunroof": "Toit ouvrant"
+    },
+    "lockAttributes": {
+      "frontLeft": "Avant gauche",
+      "frontRight": "Avant droit",
+      "rearLeft": "Arrière gauche",
+      "rearRight": "Arrière droit"
+    },
+    "windowAttributes": {
+      "frontLeft": "Avant gauche",
+      "frontRight": "Avant droit",
+      "rearLeft": "Arrière gauche",
+      "rearRight": "Arrière droit",
+      "sunroof": "Toit ouvrant"
+    },
+    "windowState": {
+      "ventilation": "Ventilation",
+      "tilt": "Entrebâillé"
+    },
+    "serviceData": {
+      "labelLockCar": "Verrouiller le véhicule",
+      "labelUnlockCar": "Déverrouiller le véhicule",
+      "labelMoreInfo": "Plus d'infos",
+      "labelPreclimateStatus": "Préclimatisation"
+    },
+    "button": {
+      "hidden": "Caché",
+      "icon": "Icône",
+      "primary": "Principal"
+    },
+    "buttonConfig": {
+      "transparent": "Transparent"
     }
+  },
+  "editor": {
+    "common": {
+      "infoServices": "Activez les services à contrôler depuis la carte.",
+      "infoButton": "Configurer les boutons de la carte."
+    },
+    "showOpts": {
+      "show_slides": "Afficher le diaporama d'images",
+      "show_buttons": "Afficher les boutons",
+      "show_map": "Afficher la carte",
+      "show_header_info": "Afficher les infos d'en-tête",
+      "show_background": "Afficher l'arrière-plan",
+      "enable_map_popup": "Activer la fenêtre de carte",
+      "show_address": "Afficher l'adresse",
+      "enable_services_control": "Activer le contrôle des services",
+      "show_error_notify": "Afficher les notifications d'erreur"
+    },
+    "buttonConfig": {
+      "desc": "Configurer les boutons affichés dans la carte",
+      "deleteConfirm": "Supprimer ce bouton ?",
+      "toastNewCard": "Nouvelle carte ajoutée"
+    },
+    "customButtonConfig": {
+      "info": "Personnaliser l'apparence et le comportement de ce bouton."
+    },
+    "customTireBackground": {
+      "info": "Arrière-plan personnalisé pour l'ancien layout pneus (rétro-compatibilité)."
+    },
+    "imagesConfig": {
+      "selectAll": "Tout sélectionner",
+      "deselectAll": "Tout désélectionner",
+      "deleteSelected": "Supprimer la sélection"
+    }
+  }
 }

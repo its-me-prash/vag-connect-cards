@@ -20,7 +20,6 @@ import {
   SERVICE_SCHEMA,
   SHOW_CONFIG_SCHEMA,
   THEME_CONFIG_SCHEMA,
-  VicPanelMapEditor,
 } from './components/editor';
 import { BUTTON_GRID_SCHEMA } from './components/editor/forms/grid-button-schema';
 import { CARD_VERSION, PREVIEW_CONFIG_TYPES } from './const/const';
@@ -56,7 +55,7 @@ const latestRelease: { version: string; hacs: boolean; updated: boolean } = {
   updated: false,
 };
 
-@customElement('vehicle-info-card-editor')
+@customElement('vag-connect-card-editor')
 export class VehicleCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public lovelace?: LovelaceConfig;
@@ -88,7 +87,6 @@ export class VehicleCardEditor extends LitElement implements LovelaceCardEditor 
 
   @query('panel-images') _panelImages!: PanelImages;
   @query('custom-card-ui-editor') _customCardEditor?: CustomCardUIEditor;
-  @query('vic-panel-map-editor') _mapEditor?: VicPanelMapEditor;
   @query('custom-button-template') _customButtonTemplate?: CustomButtonTemplate;
 
   public async setConfig(config: VehicleCardConfig): Promise<void> {
@@ -100,7 +98,7 @@ export class VehicleCardEditor extends LitElement implements LovelaceCardEditor 
     console.log('VehicleCardEditor connected');
     void loadHaComponents();
     void stickyPreview();
-    window.BenzEditor = this;
+    window.VagConnectCardEditor = this;
     this._cleanConfig();
   }
 
@@ -537,11 +535,11 @@ export class VehicleCardEditor extends LitElement implements LovelaceCardEditor 
   }
 
   private _renderMapPopupConfig(): TemplateResult {
-    return html` <vic-panel-map-editor
-      .hass=${this.hass}
-      .editor=${this}
-      ._config=${this._config}
-    ></vic-panel-map-editor>`;
+    // Map editor panel was Maptiler-specific in the Mercedes original;
+    // dropped together with the @maptiler/sdk + extra-map-card deps.
+    // Phase F (setup wizard) will replace it with a slim "device_tracker
+    // + default_zoom + hours_to_show" form.
+    return html`<div class="info-alert">Map popup configuration is being rebuilt for VAG — coming in the wizard.</div>`;
   }
 
   private _renderServicesConfig(): TemplateResult {
@@ -1605,19 +1603,19 @@ export class VehicleCardEditor extends LitElement implements LovelaceCardEditor 
 
 (window as any).customCards = (window as any).customCards || [];
 (window as any).customCards.push({
-  type: 'vehicle-info-card',
-  name: 'Vehicle Info Card',
+  type: 'vag-connect-card',
+  name: 'VAG Connect Card',
   preview: true,
-  description: 'A custom card to display vehicle data with a map and additional cards.',
-  documentationURL: 'https://github.com/ngocjohn/vehicle-info-card?tab=readme-ov-file#configuration',
+  description: 'Lovelace card for the VAG Connect integration — Audi, VW, Škoda, SEAT, CUPRA, Porsche, VW US/CA.',
+  documentationURL: 'https://github.com/its-me-prash/vag-connect-cards#configuration',
 });
 
 declare global {
   interface Window {
-    BenzEditor: VehicleCardEditor;
+    VagConnectCardEditor: VehicleCardEditor;
   }
 
   interface HTMLElementTagNameMap {
-    'vehicle-info-card-editor': LovelaceCardEditor;
+    'vag-connect-card-editor': LovelaceCardEditor;
   }
 }

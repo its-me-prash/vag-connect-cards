@@ -9,17 +9,17 @@ import styles from '../../css/remote-control.css';
 import mainstyle from '../../css/styles.css';
 import { HomeAssistant } from '../../types';
 import { convertToMinutes } from '../../utils';
-import { VehicleCard } from '../../vehicle-info-card';
+import { VagConnectCard } from '../../vag-connect-card';
 
 const enum PRECOND {
   TIME = 'time',
   ZONE_TEMP = 'zone_temp',
 }
 
-@customElement('remote-control')
-export class RemoteControl extends LitElement {
+@customElement('vag-remote-control')
+export class VagRemoteControl extends LitElement {
   @property({ attribute: false }) hass!: HomeAssistant;
-  @property({ attribute: false }) card!: VehicleCard;
+  @property({ attribute: false }) card!: VagConnectCard;
   @property({ attribute: false }) private selectedServices!: { [key: string]: { name: string; icon: string } };
 
   @state() private subcardType: string | null = null;
@@ -780,6 +780,6 @@ export class RemoteControl extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'remote-control': RemoteControl;
+    'vag-remote-control': VagRemoteControl;
   }
 }

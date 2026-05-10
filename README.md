@@ -1,263 +1,182 @@
-<a name="readme-top"></a>
-
-[![hacs][hacs-default]][hacs-default-link] [![hacs][hacs-validate]][hacs-validate-link] ![last-commit] ![total-downloads] ![latest-downloads] [![buy_me_a_coffee][bmac-badge]][bmac-link]
-# 🚙 Vehicle info card
-
-<a href="#"><img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/vehicle-header.gif" style="border-radius: 8px"></a>
-
-<br>
-
-<p style="text-align: justify;">This custom card displays essential information about your Mercedes vehicle. It retrieves data using the Custom Component for Mercedes cars by <a href="https://github.com/ReneNulschDE">ReneNulschDE</a> available at <a href="https://github.com/ReneNulschDE/mbapi2020">mbapi2020</a>. The card features four primary buttons: Trip Data, Vehicle Status, Eco Display, and Tire Pressure. These buttons can be easily replaced with any Lovelace card within Home Assistant, allowing for flexible and customizable vehicle data display.</p>
-
-## Features of the Card
-
-- **Comprehensive Vehicle Information**: Provides essential information about the car all in one place.
-
-- **Vehicle Position Display**: Shows the current location of the vehicle on a map, with the option to track routes.
-- **Visual Slideshow**: Features a visual slideshow of the vehicle.
-- **Centralized Remote Control**: Offers available remote control functions and settings, all accessible from a single card.
-- **Individual Sub-Card Customization**: Allows customization for each individual sub-card to suit specific needs and preferences.
-- **Multilingual Support**: The card includes various translations, making it accessible in multiple languages.
-
-<!--LOCALIZATION-CONTENT-START-->
-
-
-### Supported Localization
-
-<details>
-  <summary>The following languages are supported in this project</summary>
-
-| Language Code | Name                   | Native Name            |
-| ------------- | ---------------------- | ---------------------- |
-| `cs`     | Czech          | Čeština          |
-| `de`     | German          | Deutsch          |
-| `en`     | English          | English          |
-| `en_GB`     | English          | English (GB)          |
-| `es`     | Spanish          | Español          |
-| `fr`     | French          | Français          |
-| `it`     | Italiano          | Italian          |
-| `lt`     | Lithuanian          | Lietuvių          |
-| `nl`     | Dutch          | Nederlands          |
-| `pl`     | Polish          | Polski          |
-| `sk`     | Slovak          | Slovenčina          |
-| `vi`     | Vietnamese          | Tiếng Việt          |
-| `zh_Hans`     | zh-hans          | 简体中文          |
-| `zh_Hant`     | zh-hant          | 繁體中文          |
-
-</details>
-
-<!--LOCALIZATION-CONTENT-END-->
-
-### View options
-
-<img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/card-views.png">
-
-### Sub cards
-
-<img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/card-summary.png">
-
-## Installation
-
-### [HACS](https://hacs.xyz) (Home Assistant Community Store)
-
-Use this link to directly go to the repository in HACS
-
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ngocjohn&repository=vehicle-info-card&category=plugin)
-
-or
-
-1. If HACS is not installed yet, download it following the instructions on [https://hacs.xyz/docs/use/#getting-started-with-hacs](https://hacs.xyz/docs/use/#getting-started-with-hacs)
-2. Open HACS in Home Assistant
-3. Search for `Vehicle info card`
-4. Click the download button. ⬇️
-1. Force refresh the Home Assistant page `Ctrl` + `F5` / `Shift` + `⌘` + `R`
-1. Add vehicle-status-card to your dashboard
-
-
-### Manual
-
-<details>
-  <summary>Click to expand installation instructions</summary>
-
-1. Download the [vehicle-info-card.js](https://github.com/ngocjohn/vehicle-info-card/releases/latest).
-
-2. Place the downloaded file on your Home Assistant machine in the `config/www` folder (when there is no `www` folder in the folder where your `configuration.yaml` file is, create it and place the file there).
-3. In Home Assistant go to `Configuration->Lovelace Dashboards->Resources` (When there is no `resources` tag on the `Lovelace Dashboard` page, enable advanced mode in your account settings, and retry this step).
-4. Add a new resource:
-
-   - Url = `/local/vehicle-info-card.js`
-   - Resource type = `module`
-
-5. Force refresh the Home Assistant page `Ctrl` + `F5` / `Shift` + `⌘` + `R`.
-6. Add vehicle-info-card to your page.
-
-</details>
-
-## Configuration
-
-<p style="text-align: justify;">Basic options can be configured in the GUI editor. This card also offers optional advanced features for enhanced customization. You can enable a slideshow to display images of your car, with the ability to swipe sideways to navigate between images. The images can be uploaded directly to HA instance within editor. Additionally, you can display the car's position on a map along with the generated address.</p>
-
-> [!TIP]
-> For the best quality images of your vehicle, use the [Mercedes-Benz API service](https://developer.mercedes-benz.com/products/vehicle_images/docs#) to download them. You can find the Python script for downloading images [here](https://gist.github.com/ngocjohn/b1c1f3730cc6f7079ae0d2b3bddd57ad).
-
 <p align="center">
-  <a href="./assets/card-ui-editor.gif">
-    <img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/card-ui-editor.gif" alt="Card UI Editor">
-  </a>
+  <img src="https://raw.githubusercontent.com/its-me-prash/vag-connect-ha/main/custom_components/vag_connect/logo.png" alt="VAG Connect" width="160">
 </p>
 
-### Options
+<h1 align="center">VAG Connect Card</h1>
 
-<details>
-  <summary>Below is the basic configuration for the custom card </summary>
+<p align="center">
+  <strong>Home-Assistant Lovelace card für die <a href="https://github.com/its-me-prash/vag-connect-ha">VAG Connect</a> Integration</strong><br>
+  <em>Audi · Volkswagen · Škoda · SEAT · CUPRA · Porsche · VW US/CA</em>
+</p>
 
-| Name                      | Type        | Requirement | Description                                                                                                                                                                                                                   |
-| ------------------------- | ----------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`                    | string      | Required    | `custom:vehicle-info-card`.                                                                                                                                                                                                   |
-| `entity`                  | string      | Required    | The entity ID of the car sensor, e.g., `sensor.license_plate_car`.                                                                                                                                                            |
-| `name`                    | string      | Optional    | The name to be displayed on the card. Default is vehicle model name.                                                                                                                                                          |
-| `device_tracker`          | string      | Optional    | The entity ID of the device tracker for map display.                                                                                                                                                                          |
-| `google_api_key`          | string      | Optional    | Google Maps API key for generating address from coordinates. Default is using OpenStreetMap service.                                                                                                                          |
-| `selected_language`       | string      | Optional    | Language options. Default `en`                                                                                                                                                                                                |
-| `show_slides`             | boolean     | Optional    | Set to `true` to enable slideshow of car images. Default is `false`.                                                                                                                                                          |
-| `show_map`                | boolean     | Optional    | Set to `true` to display the car's position on a map. Default is `false`.                                                                                                                                                     |
-| `show_buttons`            | boolean     | Optional    | Set to `true` to show the buttons. Default is `true`.                                                                                                                                                                         |
-| `show_background`         | boolean     | Optional    | Set to `true` to show a background image. Default is `true`.                                                                                                                                                                  |
-| `enable_map_popup`        | boolean     | Optional    | Set to `true` to enable map popup function. Default is `false`.                                                                                                                                                               |
-| `enable_services_control` | boolean     | Optional    | Set to `true` to enable remote control tab. Default is `false`.                                                                                                                                                               |
-| `map_popup_config`        | object      | Optional    | Configuration including `theme_mode` to control the map’s appearance (`light` `dark` `auto`), `hours_to_show` to specify the number of hours of data to display, and `default_zoom` to set the initial zoom level of the map. |
-| `images`                  | object list        | Optional    | List of image URLs or Paths from config/www folder for the slideshow. Each image must contain a "url" property. Images render better with a transparent background and a maximum width of 500px to fit the card.                                                        |
-| `trip_card`               | object list | Optional    | Configuration objects for the trip card.                                                                                                                                                                                      |
-| `vehicle_card`            | object list | Optional    | Configuration objects for the vehicle card.                                                                                                                                                                                   |
-| `eco_card`                | object list | Optional    | Configuration objects for the eco display card.                                                                                                                                                                               |
-| `tyre_card`               | object list | Optional    | Configuration objects for the tire pressure card.                                                                                                                                                                             |
-| `services`                | object list | Optional    | Configure the available services for the integration. [Here](#services-configuration) are the available services that can be enabled or disabled.                                                                             |
-
-</details>
-
-### Services configuration
-
-> [!NOTE]
-> Some services require that the security PIN is created in your mobile Android/IOS app. Please store the pin in the options dialog of the integration. <a href="https://github.com/ReneNulschDE/mbapi2020?tab=readme-ov-file#services">More info</a>
-
-<details>
-  <summary>Services configuration</summary>
-
-| Service     | Description                                    |
-| ----------- | ---------------------------------------------- |
-| `charge`    | Manage the charging process.                   |
-| `auxheat`   | Control the auxiliary heating.                 |
-| `doorsLock` | Lock the car doors.                            |
-| `preheat`   | Control the preheating for zero emission cars. |
-| `sigPos`    | Start light signaling.                         |
-| `sunroof`   | Control the sunroof (open, tilt, close).       |
-| `sendRoute` | Send a route to the car.                       |
-| `engine`    | Control the engine (start, stop).              |
-| `windows`   | Control the windows (open, close, move).       |
-
-</details>
-
-<details>
-<summary> Yaml configuration </summary>
-
-```yaml
-services:
-  charge: true
-  auxheat: true
-  doorsLock: true
-  preheat: true
-  sigPos: true
-  sunroof: true
-  sendRoute: true
-  engine: true
-  windows: true
-```
-
-</details>
-
-### Examples
-
-Below is the configuration replaced entities card for `Vehicle status` button.
-
-> [!TIP]
-> For an enhanced picture elements card, refer to [this tutorial](https://community.home-assistant.io/t/mercedes-me-component/41911/1809) on the Home Assistant forum. Use downloaded images with the new version of the component for the best results.
-
-<details>
-
-<summary>Yaml configuration</summary>
-
-```yaml
-- type: custom:vehicle-info-card
-  entity: sensor.6z1_2359_car
-  name: Mercedes-AMG E 43 4MATIC
-  device_tracker: device_tracker.demo_paulus
-  show_map: true
-  show_slides: true
-  show_buttons: true
-  show_background: true
-  enable_map_popup: false
-  images:
-    - url: /local/benz/benz-1.png
-    - url: /local/benz/benz-2.png
-    - url: /local/benz/benz-3.png
-    - url: /local/benz/benz-4.png
-    - url: /local/benz/benz-5.png
-  vehicle_card:
-    - type: entities
-      show_header_toggle: false
-      state_color: true
-      title: Vehicle status
-      entities:
-        - entity: lock.6z1_2359_lock
-        - entity: binary_sensor.6z1_2359_park_brake_status
-        - entity: binary_sensor.6z1_2359_tire_warning
-        - entity: binary_sensor.6z1_2359_low_brake_fluid_warning
-        - entity: binary_sensor.6z1_2359_low_coolant_level_warning
-        - entity: binary_sensor.6z1_2359_engine_light_warning
-        - entity: binary_sensor.6z1_2359_low_wash_water_warning
-```
-
-<img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/card-example-editor.png">
-
-</details>
-
-## Screenshots
-
-<img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/card-dark.png" />
-<img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/card-light.png" />
-<img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/sub-cards.png" />
-
-<details>
-  <summary> More screenshots </summary>
-    <img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/card-toggled.png" />
-    <img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/car-custom-card-warning.png">
-    <img src="https://raw.githubusercontent.com/ngocjohn/vehicle-info-card/main/assets/car-custom-card.png">
-</details>
-
-## Contribution Guidelines
-
-We welcome contributions and are grateful for your support in improving this project. If you'd like to contribute, please follow our [Contribution Guidelines](docs/CONTRIBUTING.md) to get started.
-
-## Support
-If you like the card, consider supporting the developer
-
-<a href="https://www.buymeacoffee.com/ngocjohn" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 150px !important;" ></a>
+<p align="center">
+  <a href="https://hacs.xyz"><img src="https://img.shields.io/badge/HACS-Custom-orange.svg" alt="HACS"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="https://github.com/its-me-prash/vag-connect-cards/releases"><img src="https://img.shields.io/github/v/release/its-me-prash/vag-connect-cards?include_prereleases" alt="Version"></a>
+</p>
 
 ---
 
-2024 Viet Ngoc
+## Was ist das
 
-[https://github.com/ngocjohn/](https://github.com/ngocjohn/)
+Eine Lovelace-Custom-Card, die deinen VAG-Fuhrpark schön darstellt. Sie liest **direkt die Entitäten der `vag_connect` Integration** und rendert sie als:
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+- **Brand-Header** mit Marken-Wordmark (AUDI · VW · ŠKODA · SEAT · CUPRA · PORSCHE), Modellname, VIN-Last-6, Online-Indikator
+- **Image-Slider** mit deinen Fahrzeug-Renders
+- **Range-Anzeige** mit Tank-/SoC-Balken
+- **Mini-Map** mit GPS-Position aus `device_tracker.<auto>_position`
+- **4 Slide-Cards**:
+  - **Trip & Range** — Kilometerstand, Reichweiten, Tank, SoC, letzte Fahrt
+  - **Vehicle Status** — Türen, Fenster, Ladekabel, Licht, Online-Status, Warnungen
+  - **Service** — Service-Tage, Ölservice, 12-V-Spannung, OTA, Softwareversion, API-Kontingent
+  - **Battery & Charging** — SoC-Donut, Ladeleistung, ETA, Lade-Typ, Ladestrom
+- **Action-Buttons** für Lock/Unlock, Climate, Charging, Honk-Flash, Wake (via `vag_connect.*` Services)
+- **Read-only-Modus-aware** (richtet sich nach dem Integration-Option `read_only_mode`)
 
-<!--BADGES-->
-[hacs-default]: https://img.shields.io/badge/HACS-Default-blue?style=flat&logo=homeassistantcommunitystore&logoSize=auto
-[hacs-default-link]: https://my.home-assistant.io/redirect/hacs_repository/?owner=ngocjohn&repository=vehicle-info-card&category=plugin
-[hacs-validate]: https://github.com/ngocjohn/vehicle-info-card/actions/workflows/validate.yaml/badge.svg
-[hacs-validate-link]: https://github.com/ngocjohn/vehicle-info-card/actions/workflows/validate.yaml
-[last-commit]: https://img.shields.io/github/last-commit/ngocjohn/vehicle-info-card
-[total-downloads]: https://img.shields.io/github/downloads/ngocjohn/vehicle-info-card/total?style=flat&logo=homeassistantcommunitystore&logoSize=auto&label=Downloads&color=%2318BCF2
-[latest-downloads]: https://img.shields.io/github/downloads/ngocjohn/vehicle-info-card/latest/total?style=flat&logo=homeassistantcommunitystore&logoSize=auto
-[bmac-link]: https://www.buymeacoffee.com/ngocjohn
-[bmac-badge]: https://img.shields.io/badge/_-buy_me_a_coffee-F28834?style=flat&logo=buymeacoffee&labelColor=grey&color=%23F28834
+Optik basiert auf [ngocjohn/vehicle-info-card](https://github.com/ngocjohn/vehicle-info-card) (MIT), die Card-Architektur, Daten-Discovery und alle Card-Inhalte wurden für VAG Connect neu gebaut.
+
+---
+
+## Voraussetzungen
+
+- Home Assistant ≥ 2024.4
+- [VAG Connect Integration](https://github.com/its-me-prash/vag-connect-ha) installiert + mindestens ein Fahrzeug konfiguriert
+
+---
+
+## Installation
+
+### Via HACS (empfohlen)
+
+1. HACS → **Frontend** → ⋮ → **Custom repositories**
+2. URL: `https://github.com/its-me-prash/vag-connect-cards`
+3. Kategorie: **Lovelace**
+4. **VAG Connect Card** installieren
+5. Home Assistant neu laden (`Ctrl+F5`)
+
+### Manuell
+
+1. Lade `vag-connect-card.js` aus dem [neuesten Release](https://github.com/its-me-prash/vag-connect-cards/releases)
+2. Lege es nach `/config/www/vag-connect-card.js`
+3. **Settings → Dashboards → ⋮ → Resources → Add resource**:
+   - URL: `/local/vag-connect-card.js`
+   - Type: **JavaScript Module**
+
+---
+
+## Konfiguration
+
+### Minimum-Setup
+
+```yaml
+type: custom:vag-connect-card
+entity: sensor.audi_a4_b9_battery_soc
+```
+
+Die Card erkennt automatisch das Device hinter `entity` und mappt alle weiteren VAG-Connect-Entitäten (`sensor.<vin>_*`, `binary_sensor.<vin>_*`, `image.<vin>_*`, `device_tracker.<vin>_position`).
+
+### Vollkonfiguration
+
+```yaml
+type: custom:vag-connect-card
+entity: sensor.audi_a4_b9_battery_soc
+device_tracker: device_tracker.audi_a4_b9_position
+model_name: Audi A4 B9 Avant
+brand_logo_url: /local/my-audi-logo.svg   # optional custom logo override
+show_slides: true
+show_buttons: true
+show_map: true
+show_header_info: true
+show_background: true
+enable_map_popup: true
+enable_services_control: true
+images:
+  - url: https://example.com/audi-a4-front.jpg
+    title: Front
+  - url: https://example.com/audi-a4-side.jpg
+    title: Side
+map_popup_config:
+  hours_to_show: 24
+  default_zoom: 13
+  theme_mode: auto
+services:
+  doorsLock: true
+  charge: true
+  preheat: true
+  auxheat: true
+selected_language: de
+selected_theme:
+  theme: default
+  mode: auto
+```
+
+Alle Optionen sind außerdem über den **visuellen Editor** im Lovelace-Dashboard zugänglich.
+
+---
+
+## Marken-Branding
+
+Die Card rendert standardmäßig die Marke als **Text-Wordmark** (AUDI / VW / ŠKODA / SEAT / CUPRA / PORSCHE / VW US / VAG) — bewusst kein Original-Hersteller-Logo, weil das public HACS-Repos markenrechtlich gefährdet.
+
+Wenn du in deinem privaten HA-Setup ein echtes Logo zeigen willst:
+
+```yaml
+brand_logo_url: /local/logos/audi-rings.svg
+```
+
+Pfad zeigt auf jedes Asset, das HA via `/local/...` ausliefern kann.
+
+---
+
+## Action-Buttons
+
+Die Card stellt die folgenden VAG-Connect-Services bereit (Action-Buttons-Reihe):
+
+| Button | VAG Service | Erfordert |
+|---|---|---|
+| Lock | `vag_connect.lock` | — |
+| Unlock | `vag_connect.unlock` | S-PIN bei einigen Marken |
+| Climate Start | `vag_connect.start_climatisation` | — |
+| Climate Stop | `vag_connect.stop_climatisation` | — |
+| Charging Start | `vag_connect.start_charging` | — |
+| Charging Stop | `vag_connect.stop_charging` | — |
+| Honk & Flash | `vag_connect.flash_lights` | — |
+| Wake | `vag_connect.wake_vehicle` | (zählt gegen Smart-Wake-Cap) |
+| Refresh | `vag_connect.refresh_vehicle` | — |
+
+Buttons werden **deaktiviert**, wenn die Integration im `read_only_mode` läuft (kein versehentliches Steuern in Automationen).
+
+---
+
+## Sprachen
+
+- 🇩🇪 Deutsch (`de`)
+- 🇬🇧 Englisch (`en`)
+- 🇫🇷 Französisch (`fr`)
+
+Auto-Erkennung aus `selected_language: system` (Default) oder explizit per `selected_language: de`.
+
+---
+
+## Status
+
+Diese Card ist eine **Native-Migration** von `ngocjohn/vehicle-info-card` (Mercedes mbapi2020) auf VAG Connect. Aktuell **Beta** — Optik 1:1 vom Original übernommen, Daten/Discovery/Services komplett auf VAG umgebaut.
+
+Geplante Features (Future-Releases):
+- 🪄 **Setup-Wizard** im Editor — Dropdown-Auswahl deiner VAG-Connect-Devices + Tickboxen für Sektionen (statt manuellem YAML)
+- 🖼️ **Auto-Image-Slider** der `image.<vin>_render_*` Entities ohne manuelle URL-Pflege
+- 🎨 Optionale eingebettete Hersteller-Logo-Assets (falls Markenrechte geklärt)
+
+---
+
+## Credits
+
+- Basis-Architektur, Editor-Framework, Slide-Carousel, CSS-Layout: [ngocjohn/vehicle-info-card](https://github.com/ngocjohn/vehicle-info-card) (MIT)
+- VAG-Connect-Migration, Entity-Discovery, Marken-Header, Service-Mapping: [@its-me-prash](https://github.com/its-me-prash)
+- VAG-Connect-HA-Integration: [`its-me-prash/vag-connect-ha`](https://github.com/its-me-prash/vag-connect-ha)
+
+---
+
+## Lizenz
+
+MIT — siehe [`LICENSE`](LICENSE).

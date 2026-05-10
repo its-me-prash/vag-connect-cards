@@ -8,7 +8,7 @@ import './components';
 import { classMap } from 'lit/directives/class-map.js';
 import { styleMap } from 'lit/directives/style-map.js';
 
-import { EcoChart, RemoteControl, VehicleButtons, VehicleMap } from './components/';
+import { VagRemoteControl, VagButtons, VagMap } from './components/';
 import { CardItem, cardTypes } from './const/data-keys';
 import { IMAGE } from './const/imgconst';
 import { servicesCtrl } from './const/remote-control-keys';
@@ -26,7 +26,6 @@ import {
   defaultConfig,
   BaseButtonConfig,
   VehicleEntities,
-  ecoChartModel,
   SECTION_DEFAULT_ORDER,
 } from './types';
 import { HEADER_ACTION, PreviewCard, MapData, SECTION } from './types';
@@ -43,17 +42,16 @@ import {
   isDarkColor,
   _getSingleCard,
   applyThemesOnElement,
-  loadAndCleanExtraMap,
 } from './utils';
 import { getAddedButton, getDefaultButton, createCardElement, createCustomButtons } from './utils';
 
 const ROWPX = 58;
 
-@customElement('vehicle-info-card')
-export class VehicleCard extends LitElement implements LovelaceCard {
+@customElement('vag-connect-card')
+export class VagConnectCard extends LitElement implements LovelaceCard {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
     await import('./editor');
-    return document.createElement('vehicle-info-card-editor');
+    return document.createElement('vag-connect-card-editor');
   }
   // Properties
   @property({ attribute: false })
@@ -85,6 +83,9 @@ export class VehicleCard extends LitElement implements LovelaceCard {
   @state() public _entityNotFound: boolean = false;
 
   @state() DataKeys: Record<string, CardItem[]> = {};
+  /** Device manufacturer string, resolved during first update. Used by the
+   *  brand header to render the right wordmark/logo styling. */
+  @state() public _brandManufacturer: string = '';
   @state() MapData?: MapData;
   @state() PreviewCard: PreviewCard = {};
   // Active card type
@@ -110,15 +111,13 @@ export class VehicleCard extends LitElement implements LovelaceCard {
   @state() _cardId?: string | null;
   private _calculateCardHeight?: number;
   // Components
-  @query('vehicle-buttons') vehicleButtons!: VehicleButtons;
-  @query('vehicle-map') vehicleMap!: VehicleMap;
-  @query('eco-chart') ecoChart!: EcoChart;
-  @query('remote-control') remoteControl!: RemoteControl;
-  @query('extra-map-card') _extraMapCard?: any;
+  @query('vag-buttons') vehicleButtons!: VagButtons;
+  @query('vag-map') vehicleMap!: VagMap;
+  @query('vag-remote-control') remoteControl!: VagRemoteControl;
 
   connectedCallback(): void {
     super.connectedCallback();
-    window.BenzCard = this;
+    window.VagConnectCard = this;
 
     if (this.editMode) {
       this._loading = false;
@@ -164,8 +163,12 @@ export class VehicleCard extends LitElement implements LovelaceCard {
   }
 
   private get isCharging(): boolean {
-    const chargingActive = this.getEntityAttribute(this.vehicleEntities.rangeElectric?.entity_id, 'chargingactive');
-    return Boolean(chargingActive);
+    // Prefer binary_sensor.<vin>_is_charging; fall back to charging_state == 'charging'.
+    const isChargingEntityId = this.vehicleEntities.isCharging?.entity_id;
+    if (isChargingEntityId) return this.getBooleanState(isChargingEntityId);
+    const chargingStateEntity = this.vehicleEntities.chargingState?.entity_id;
+    if (chargingStateEntity) return this.getEntityState(chargingStateEntity) === 'charging';
+    return false;
   }
 
   get carVinNumber(): string {
@@ -347,13 +350,9 @@ export class VehicleCard extends LitElement implements LovelaceCard {
   private createSingleMapCard() {
     setTimeout(async () => {
       this._singleMapCard = (await _getSingleCard(this)) as LovelaceCardConfig;
-      setTimeout(() => {
-        // check if the map card is loaded
-        if (this._extraMapCard && this.layout === 'panel' && !this.isEditorPreview) {
-          const root = this._extraMapCard!.shadowRoot.getElementById('root') as HTMLElement;
-          root.style.paddingBottom = 'unset';
-        }
-      }, 0);
+      // panel-layout padding hack from the Mercedes original targeted
+      // <extra-map-card>'s shadow root; we now use plain HA <map> so the
+      // tweak is no longer needed.
     }, 0);
   }
 
@@ -434,7 +433,57 @@ export class VehicleCard extends LitElement implements LovelaceCard {
     if (!this.config?.show_header_info && this.config?.show_header_info !== undefined) return html``;
     return html`
       <div id=${SECTION.HEADER_INFO} class="header-info-box">
-        ${this._renderInfoBox()} ${this._renderChargingInfo()} ${this._renderRangeInfo()}
+        ${this._renderBrandHeader()} ${this._renderInfoBox()} ${this._renderChargingInfo()} ${this._renderRangeInfo()}
+      </div>
+    `;
+  }
+
+  /**
+   * VAG brand header — brand wordmark + model + VIN-last-6 + online state.
+   * Markenrechte: we deliberately render the brand as a styled text wordmark
+   * (AUDI / VW / ŠKODA / SEAT / CUPRA / PORSCHE / VW US) plus an MDI car icon,
+   * rather than shipping copyrighted manufacturer logos. Users that want a
+   * real logo can set `brand_logo_url` in their config and it overrides
+   * the wordmark.
+   */
+  private _renderBrandHeader(): TemplateResult {
+    const customLogo = (this.config as any).brand_logo_url as string | undefined;
+    const modelName = this.config.model_name || '';
+    const vin = this.carVinNumber || '';
+    const vinShort = vin ? vin.slice(-6) : '';
+
+    const brand = (this._brandManufacturer || '').toLowerCase();
+    const isOnline = this.vehicleEntities.isOnline?.entity_id
+      ? this.getBooleanState(this.vehicleEntities.isOnline.entity_id)
+      : undefined;
+
+    const brandWordmark = (() => {
+      if (brand.includes('audi')) return 'AUDI';
+      if (brand.includes('škoda') || brand.includes('skoda')) return 'ŠKODA';
+      if (brand.includes('cupra')) return 'CUPRA';
+      if (brand.includes('seat')) return 'SEAT';
+      if (brand.includes('porsche')) return 'PORSCHE';
+      if (brand.includes('volkswagen'))
+        return brand.includes('us') || brand.includes('na') ? 'VW US' : 'VW';
+      return 'VAG';
+    })();
+
+    return html`
+      <div class="vag-brand-header" brand="${brandWordmark.toLowerCase().replace(/\s/g, '_')}">
+        <div class="brand-logo-slot">
+          ${customLogo
+            ? html`<img src=${customLogo} alt="Brand logo" />`
+            : html`<span class="brand-wordmark">${brandWordmark}</span>`}
+        </div>
+        <div class="brand-meta">
+          <span class="brand-model">${modelName || this.localize('card.common.vehicle')}</span>
+          ${vinShort ? html`<span class="brand-vin">VIN ···${vinShort}</span>` : ''}
+        </div>
+        ${isOnline !== undefined
+          ? html`<div class="brand-online" ?online=${isOnline} title=${isOnline ? 'online' : 'offline'}>
+              <ha-icon icon=${isOnline ? 'mdi:wifi' : 'mdi:wifi-off'}></ha-icon>
+            </div>`
+          : ''}
       </div>
     `;
   }
@@ -444,7 +493,8 @@ export class VehicleCard extends LitElement implements LovelaceCard {
     const isServiceControl = this.config.enable_services_control !== false;
     const justify = isCharging && isServiceControl ? 'space-evenly' : 'center';
 
-    const defaultIndicData = this.createDataArray([{ key: 'lockSensor' }, { key: 'parkBrake' }]);
+    // VAG header indicators: lock state + online state (was Mercedes lock + park brake).
+    const defaultIndicData = this.createDataArray([{ key: 'doorsLocked' }, { key: 'isOnline' }]);
 
     // Helper function to render items
     const renderItem = (icon: string, label: string, onClick: () => void, isActive: boolean = false) => html`
@@ -533,7 +583,8 @@ export class VehicleCard extends LitElement implements LovelaceCard {
       return { state, stateDisplay };
     };
 
-    const entities = ['fuelLevel', 'rangeLiquid', 'rangeElectric', 'soc'];
+    // VAG: rangeLiquid -> rangeCombustion. soc + rangeElectric remain.
+    const entities = ['fuelLevel', 'rangeCombustion', 'rangeElectric', 'soc'];
     const [fuelInfo, rangeLiquidInfo, rangeElectricInfo, socInfo] = entities.map((entity) =>
       getEntityInfo(this.vehicleEntities[entity]?.entity_id)
     );
@@ -580,7 +631,7 @@ export class VehicleCard extends LitElement implements LovelaceCard {
 
     return html`
       <div id=${SECTION.IMAGES_SLIDER}>
-        <header-slide .config=${this.config} .editMode=${this.editMode}></header-slide>
+        <vag-header-slide .config=${this.config} .editMode=${this.editMode}></vag-header-slide>
       </div>
     `;
   }
@@ -598,37 +649,18 @@ export class VehicleCard extends LitElement implements LovelaceCard {
     }
     return html`
       <div id=${SECTION.MINI_MAP}>
-        <vehicle-map .hass=${this._hass} .mapData=${this.MapData!} .card=${this} .isDark=${isDark}></vehicle-map>
+        <vag-map .hass=${this._hass} .mapData=${this.MapData!} .card=${this} .isDark=${isDark}></vag-map>
       </div>
     `;
   }
 
+  // Eco-chart was Mercedes-only (mbapi2020 ecoScore* sensors). VAG Connect
+  // does not expose driving-style eco-scores, so this slot was repurposed
+  // for Service & Diagnostics in data-keys.ts. The render hook stays as a
+  // no-op so that markup referencing it keeps working until the
+  // Service-card render is wired up in Phase D.
   private _renderEcoChart(): TemplateResult {
-    if (this._currentCardType !== 'ecoCards') return html``;
-
-    const getEcoScore = (entity: string | undefined): number => {
-      if (!entity) return 0;
-      const state = this.getEntityState(entity);
-      return state === 'unavailable' ? 0 : parseFloat(state);
-    };
-
-    const filteredData = Object.values(this.DataKeys.ecoScores).filter((item) => item.key !== 'ecoScoreBonusRange');
-
-    const echoChartObj = {} as ecoChartModel;
-
-    const chartData = filteredData.map((item) => {
-      const label = this.localize(`card.ecoCard.${item.key}`);
-      const score = getEcoScore(this.vehicleEntities[item.key].entity_id);
-      return { series: score, labels: label };
-    });
-
-    echoChartObj.chartData = chartData;
-    echoChartObj.bonusRange = {
-      label: this.localize('card.ecoCard.ecoScoreBonusRange'),
-      value: this.getStateDisplay(this.vehicleEntities.ecoScoreBonusRange?.entity_id),
-    };
-
-    return html`<eco-chart .ecoChartData=${echoChartObj}></eco-chart>`;
+    return html``;
   }
 
   private _renderButtons(): TemplateResult {
@@ -638,13 +670,13 @@ export class VehicleCard extends LitElement implements LovelaceCard {
     const config = this.config;
     return html`
       <div id=${SECTION.BUTTONS}>
-        <vehicle-buttons
+        <vag-buttons
           .hass=${this._hass}
           .component=${this}
           ._config=${config}
           ._buttons=${buttonCards}
           ._cardCurrentSwipeIndex=${this._currentSwipeIndex}
-        ></vehicle-buttons>
+        ></vag-buttons>
       </div>
     `;
   }
@@ -715,7 +747,7 @@ export class VehicleCard extends LitElement implements LovelaceCard {
   }
 
   private _renderDefaultTripCard(): TemplateResult | void {
-    const { tripOverview, tripFromStart, tripFromReset } = this.DataKeys;
+    const { tripOverview, lastTripStats } = this.DataKeys;
     const sections = [
       {
         title: this.localize('card.tripCard.overview'),
@@ -723,14 +755,9 @@ export class VehicleCard extends LitElement implements LovelaceCard {
         key: '',
       },
       {
-        title: this.localize('card.tripCard.fromStart'),
-        data: this.createDataArray(tripFromStart),
-        key: 'fromStart',
-      },
-      {
-        title: this.localize('card.tripCard.fromReset'),
-        data: this.createDataArray(tripFromReset),
-        key: 'fromReset',
+        title: this.localize('card.tripCard.lastTrip'),
+        data: this.createDataArray(lastTripStats),
+        key: 'lastTrip',
       },
     ];
     return html` ${sections.map((section) => this.createItemDataRow(section.title, section.data, section.key))} `;
@@ -782,82 +809,65 @@ export class VehicleCard extends LitElement implements LovelaceCard {
     `;
   }
 
+  // Service & Diagnostics — was Mercedes Eco. Renders service-due, oil-service,
+  // 12V, software version + an OTA/quota/connection sub-section.
   private _renderDefaultEcoCard(): TemplateResult | void {
-    const ecoData = this.createDataArray(this.DataKeys.ecoScores);
-
-    return html`<div class="default-card">
-        <div class="data-header">${this.localize('card.ecoCard.ecoDisplay')}</div>
-        <div class="data-box">${this._renderEcoChart()}</div>
-      </div>
-      ${this.createItemDataRow(this.localize('card.ecoCard.ecoScore'), ecoData, 'ecoScores')}`;
-  }
-
-  private _renderDefaultTyreCard(): TemplateResult {
-    if (!this.DataKeys.tyrePressures) return html``;
-    const tireConfig = this.config?.extra_configs?.tire_card_custom || {};
-    const customTyreBg = tireConfig?.background || IMAGE.BACK_TYRE;
-    const isHorizontal = tireConfig?.horizontal ?? false;
-    const tireImageSize = tireConfig?.image_size ?? 100;
-    const tireValueSize = tireConfig?.value_size ?? 100;
-    const tireTop = tireConfig?.top ?? 50;
-    const tireLeft = tireConfig?.left ?? 50;
-
-    const sizeStyle = {
-      '--vic-tire-top': `${tireTop}%`,
-      '--vic-tire-left': `${tireLeft}%`,
-      '--vic-tire-size': `${tireImageSize}%`,
-      '--vic-tire-value-size': tireValueSize / 100,
-    };
-
-    const isPressureWarning = this.getBooleanState(this.vehicleEntities.tirePressureWarning?.entity_id);
-
-    const tireCardTitle = this.localize('card.tyreCard.tyrePressure');
-    const tireWarningProblem = this.localize('card.tyreCard.tireWarningProblem');
-    const tireWarningOk = this.localize('card.tyreCard.tireWarningOk');
-
-    const tyreInfo = isPressureWarning ? tireWarningProblem : tireWarningOk;
-
+    const serviceData = this.createDataArray(this.DataKeys.serviceOverview);
+    const diagnosticsData = this.createDataArray(this.DataKeys.diagnosticsOverview);
     return html`
-      <div class="default-card">
-        <div class="data-header">${tireCardTitle}</div>
-        <div class="tyre-toggle-btn click-shrink" @click=${(ev: Event) => this.toggleTireDirection(ev)}>
-          <ha-icon icon="mdi:rotate-right-variant"></ha-icon>
-        </div>
-        <div class="data-box tyre-wrapper" ?rotated=${isHorizontal} style=${styleMap(sizeStyle)}>
-          <div class="background" style="background-image: url(${customTyreBg})"></div>
-          ${this.DataKeys.tyrePressures.map(
-            (tyre) =>
-              html` <div
-                class="tyre-box"
-                tyre=${tyre.key.replace('tirePressure', '').toLowerCase()}
-                ?rotated=${isHorizontal}
-              >
-                <span class="tyre-value">${this.getStateDisplay(this.vehicleEntities[tyre.key]?.entity_id)}</span>
-                <span class="tyre-name">${tyre.name}</span>
-              </div>`
-          )}
-        </div>
-        <div class="tyre-info" ?warning=${isPressureWarning}>
-          <span>${tyreInfo}</span>
-        </div>
-      </div>
+      ${this.createItemDataRow(this.localize('card.ecoCard.serviceTitle'), serviceData, '')}
+      ${this.createItemDataRow(this.localize('card.ecoCard.diagnosticsTitle'), diagnosticsData, 'diagnostics')}
     `;
   }
 
-  private toggleTireDirection(ev: Event): void {
-    ev.stopPropagation();
-    const target = ev.target as HTMLElement;
-    const tyreWrapper = target.closest('.default-card')?.querySelector('.tyre-wrapper');
-    const tyreBoxex = tyreWrapper?.querySelectorAll('.tyre-box');
-    if (!tyreWrapper || !tyreBoxex) return;
+  // Battery & Charging — was Mercedes 4-tyre-pressure layout (VAG has no
+  // per-wheel pressures). Now renders an SoC donut + charging stats list.
+  private _renderDefaultTyreCard(): TemplateResult {
+    const chargingData = this.createDataArray(this.DataKeys.chargingOverview);
+    const detailsData = this.createDataArray(this.DataKeys.chargingDetails);
 
-    const isHorizontal = tyreWrapper.attributes.hasOwnProperty('rotated');
+    const socEntityId = this.vehicleEntities.soc?.entity_id;
+    const targetSocEntityId = this.vehicleEntities.targetSoc?.entity_id;
+    const socValue = socEntityId ? parseInt(this.getEntityState(socEntityId)) : NaN;
+    const socDisplay = socEntityId ? this.getStateDisplay(socEntityId) : '—';
+    const targetSocDisplay = targetSocEntityId ? this.getStateDisplay(targetSocEntityId) : undefined;
+    const charging = this.isCharging;
 
-    tyreWrapper.toggleAttribute('rotated', !isHorizontal);
+    // Inline SVG donut — same visual rhythm as the original tyre layout
+    // (centered visual + ring of values) but VAG-meaningful.
+    const radius = 54;
+    const circumference = 2 * Math.PI * radius;
+    const dashOffset = Number.isFinite(socValue)
+      ? circumference - (Math.max(0, Math.min(100, socValue)) / 100) * circumference
+      : circumference;
 
-    tyreBoxex.forEach((el) => {
-      el.toggleAttribute('rotated', !isHorizontal);
-    });
+    return html`
+      <div class="default-card">
+        <div class="data-header">${this.localize('card.tyreCard.batteryTitle')}</div>
+        <div class="battery-donut-wrapper">
+          <svg viewBox="0 0 140 140" class="battery-donut" ?charging=${charging}>
+            <circle class="battery-track" cx="70" cy="70" r=${radius}></circle>
+            <circle
+              class="battery-fill"
+              cx="70" cy="70" r=${radius}
+              stroke-dasharray=${circumference}
+              stroke-dashoffset=${dashOffset}
+              transform="rotate(-90 70 70)"
+            ></circle>
+            <text x="70" y="70" text-anchor="middle" dominant-baseline="central" class="battery-soc-text">
+              ${socDisplay}
+            </text>
+            ${targetSocDisplay
+              ? html`<text x="70" y="92" text-anchor="middle" dominant-baseline="central" class="battery-target-text">
+                  ${this.localize('card.tyreCard.target')} ${targetSocDisplay}
+                </text>`
+              : ''}
+          </svg>
+        </div>
+      </div>
+      ${this.createItemDataRow(this.localize('card.tyreCard.chargingOverview'), chargingData, '')}
+      ${this.createItemDataRow(this.localize('card.tyreCard.chargingDetails'), detailsData, 'chargingDetails')}
+    `;
   }
 
   private _renderServiceControl(): TemplateResult | void {
@@ -876,7 +886,7 @@ export class VehicleCard extends LitElement implements LovelaceCard {
 
     return html`
       <div class="default-card remote-tab">
-        <remote-control .hass=${hass} .card=${this as any} .selectedServices=${activeServices}></remote-control>
+        <vag-remote-control .hass=${hass} .card=${this as any} .selectedServices=${activeServices}></vag-remote-control>
       </div>
     `;
   }
@@ -934,37 +944,32 @@ export class VehicleCard extends LitElement implements LovelaceCard {
   private _renderOverviewDataWithSubCard(): TemplateResult {
     const overViewData = this.createDataArray(this.DataKeys.vehicleOverview);
 
-    // Map to handle the visibility and rendering of subcards
+    // VAG: doors_locked / doors_open / windows_open each expand into a
+    // per-position sub-card using extra_state_attributes.detail.
     const subCardMapping = {
-      lockSensor: {
+      doorsLocked: {
         key: 'lock',
         renderSubCard: () => this._renderSubCard('lock'),
       },
-      windowsClosed: {
-        key: 'window',
-        renderSubCard: () => this._renderSubCard('window'),
-      },
-      doorStatusOverall: {
+      doorsOpen: {
         key: 'door',
         renderSubCard: () => this._renderSubCard('door'),
+      },
+      windowsOpen: {
+        key: 'window',
+        renderSubCard: () => this._renderSubCard('window'),
       },
     };
 
     const toggleMoreInfo = (key: string) => {
-      const entityId =
-        key === 'lockSensor' || key === 'doorStatusOverall'
-          ? this.vehicleEntities.lockSensor?.entity_id
-          : this.vehicleEntities[key]?.entity_id;
-
-      if (entityId) {
-        this.toggleMoreInfo(entityId);
-      }
+      const entityId = this.vehicleEntities[key]?.entity_id;
+      if (entityId) this.toggleMoreInfo(entityId);
     };
 
     const subCardVisible = (key: string) => this.isSubCardActive(key);
 
     const toggleSubCard = (key: string) => {
-      if (['doorStatusOverall', 'lockSensor', 'windowsClosed'].includes(key)) {
+      if (['doorsLocked', 'doorsOpen', 'windowsOpen'].includes(key)) {
         this.toggleSubCard(subCardMapping[key].key);
       } else {
         toggleMoreInfo(key);
@@ -1060,10 +1065,12 @@ export class VehicleCard extends LitElement implements LovelaceCard {
   }
 
   private getEntityTypeId(attributeType: 'lock' | 'window' | 'door'): string | undefined {
+    // VAG: each aggregate binary sensor owns the per-position detail in
+    // extra_state_attributes.detail.* — sub-card reads from that entity.
     const entityMapping: Record<string, string | undefined> = {
-      lock: this.vehicleEntities.lockSensor?.entity_id,
-      window: this.vehicleEntities.windowsClosed?.entity_id,
-      door: this.vehicleEntities.lockSensor?.entity_id,
+      lock: this.vehicleEntities.doorsLocked?.entity_id,
+      window: this.vehicleEntities.windowsOpen?.entity_id,
+      door: this.vehicleEntities.doorsOpen?.entity_id,
     };
     return entityMapping[attributeType];
   }
@@ -1668,12 +1675,9 @@ export class VehicleCard extends LitElement implements LovelaceCard {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vehicle-info-card': VehicleCard;
+    'vag-connect-card': VagConnectCard;
   }
   interface Window {
-    BenzCard: VehicleCard;
+    VagConnectCard: VagConnectCard;
   }
 }
-
-// Load and clean extra map resources
-loadAndCleanExtraMap().catch(console.error);

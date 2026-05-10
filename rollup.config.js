@@ -30,10 +30,10 @@ const plugins = [dev && serve(serveopts), !dev && terser(terserOpt), !dev && fil
 
 export default [
   {
-    input: 'src/vehicle-info-card.ts',
+    input: 'src/vag-connect-card.ts',
     output: [
       {
-        file: dev ? 'dist/vehicle-info-card.js' : 'build/vehicle-info-card.js',
+        file: dev ? 'dist/vag-connect-card.js' : 'build/vag-connect-card.js',
         format: 'es',
         sourcemap: dev ? true : false,
         inlineDynamicImports: true,
@@ -44,18 +44,9 @@ export default [
       exclude: 'node_modules/**',
     },
     plugins: [...plugins, ...defaultPlugins],
-    moduleContext: (id) => {
-      const thisAsWindowForModules = [
-        'node_modules/@formatjs/intl-utils/lib/src/diff.js',
-        'node_modules/@formatjs/intl-utils/lib/src/resolve-locale.js',
-      ];
-      if (thisAsWindowForModules.some((id_) => id.trimRight().endsWith(id_))) {
-        return 'window';
-      }
-    },
     onwarn(warning, warn) {
-      if (warning.code === 'CIRCULAR_DEPENDENCY') return; // Ignore circular dependency warnings
-      warn(warning); // Display other warnings
+      if (warning.code === 'CIRCULAR_DEPENDENCY') return;
+      warn(warning);
     },
   },
 ];

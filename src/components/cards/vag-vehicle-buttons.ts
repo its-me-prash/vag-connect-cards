@@ -13,13 +13,13 @@ import mainstyle from '../../css/styles.css';
 // Local imports
 import { ButtonCardEntity, HomeAssistant, VehicleCardConfig } from '../../types';
 // Components
-import './vic-button-single';
-import { VehicleCard } from '../../vehicle-info-card';
+import './vag-button-single';
+import { VagConnectCard } from '../../vag-connect-card';
 
-@customElement('vehicle-buttons')
-export class VehicleButtons extends LitElement {
+@customElement('vag-buttons')
+export class VagButtons extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
-  @property({ attribute: false }) public component!: VehicleCard;
+  @property({ attribute: false }) public component!: VagConnectCard;
   @property({ attribute: false }) _config!: VehicleCardConfig;
   @property({ attribute: false }) _buttons!: ButtonCardEntity;
 
@@ -105,7 +105,7 @@ export class VehicleButtons extends LitElement {
     if (!this.shadowRoot) return;
 
     const runAnimation = () => {
-      const gridItems = this.shadowRoot?.querySelectorAll('vic-button-single') as NodeListOf<HTMLElement>;
+      const gridItems = this.shadowRoot?.querySelectorAll('vag-button-single') as NodeListOf<HTMLElement>;
       if (!gridItems || gridItems.length === 0) return;
 
       gridItems.forEach((grid, index) => {
@@ -130,7 +130,7 @@ export class VehicleButtons extends LitElement {
     };
 
     const observer = new MutationObserver(() => {
-      const buttons = this.shadowRoot?.querySelectorAll('vic-button-single') as NodeListOf<HTMLElement>;
+      const buttons = this.shadowRoot?.querySelectorAll('vag-button-single') as NodeListOf<HTMLElement>;
       if (buttons && buttons.length > 0) {
         requestAnimationFrame(() => runAnimation());
       }
@@ -246,14 +246,14 @@ export class VehicleButtons extends LitElement {
 
   private _renderButton(key: string): TemplateResult {
     const button = this._buttons[key];
-    return html` <vic-button-single
+    return html` <vag-button-single
       data-key="${`button-${key}`}"
       .hass=${this.hass}
       ._config=${this._config}
       ._card=${this}
       ._button=${button}
       .layout=${this.buttonConfig.button_layout}
-    ></vic-button-single>`;
+    ></vag-button-single>`;
   }
 
   private _chunkObject = (obj: ButtonCardEntity, size: number): ButtonCardEntity => {
@@ -288,7 +288,7 @@ export class VehicleButtons extends LitElement {
 
   public showCustomBtnEditor = (key: string): void => {
     const btnId = `button-${key}`;
-    const gridBtns = this.shadowRoot?.querySelectorAll('vic-button-single') as NodeListOf<HTMLElement>;
+    const gridBtns = this.shadowRoot?.querySelectorAll('vag-button-single') as NodeListOf<HTMLElement>;
     const btnElt = Array.from(gridBtns).find((btn) => btn.getAttribute('data-key') === btnId) as HTMLElement;
 
     if (!btnElt) return;
@@ -347,6 +347,6 @@ export class VehicleButtons extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vehicle-buttons': VehicleButtons;
+    'vag-buttons': VagButtons;
   }
 }

@@ -1,10 +1,9 @@
 const HELPERS = (window as any).loadCardHelpers ? (window as any).loadCardHelpers() : undefined;
 
 import { hasAction } from 'custom-card-helpers';
-import { ExtraMapCardConfig, MapEntityConfig } from 'extra-map-card';
 import memoizeOne from 'memoize-one';
 
-import { combinedFilters, CARD_UPADE_SENSOR, CARD_VERSION, REPOSITORY } from '../const/const';
+import { combinedFilters, CARD_UPADE_SENSOR, CARD_VERSION, REPOSITORY, VAG_DOMAIN, VAG_SERVICES, VagBrand } from '../const/const';
 import { baseDataKeys } from '../const/data-keys';
 import { VehicleCardEditor } from '../editor';
 import {
@@ -17,65 +16,130 @@ import {
   CardTypeConfig,
   ButtonCardEntity,
   AddedCards,
-  MapData,
   SECTION,
   defaultConfig,
   Address,
-  MapPopupConfig,
   ButtonActionConfig,
 } from '../types';
 import { LovelaceCardConfig } from '../types/ha-frontend/lovelace/lovelace';
-import { VehicleCard } from '../vehicle-info-card';
+import { VagConnectCard } from '../vag-connect-card';
+
+// ---------------------------------------------------------------------------
+// VAG Connect device + entity discovery
+// ---------------------------------------------------------------------------
+
+export interface VagConnectDevice {
+  id: string;
+  name: string;
+  model: string;
+  manufacturer: string;
+  brand: VagBrand | undefined;
+  /** Last 17 chars of unique_id that look VIN-like — best-effort. */
+  vin?: string;
+}
 
 /**
- *
- * @param car
- * @returns
+ * Returns the list of HA devices that belong to the `vag_connect` integration.
+ * Used by the editor's setup-wizard to populate a "pick your car" dropdown.
  */
+export async function listVagConnectDevices(hass: HomeAssistant): Promise<VagConnectDevice[]> {
+  const [devices, entries] = await Promise.all([
+    hass.callWS<{ id: string; name: string | null; name_by_user: string | null; model: string | null; manufacturer: string | null; config_entries: string[]; identifiers: [string, string][] }[]>({
+      type: 'config/device_registry/list',
+    }),
+    hass.callWS<{ entry_id: string; domain: string }[]>({
+      type: 'config_entries/get',
+    }),
+  ]);
+
+  const vagEntryIds = new Set(entries.filter((e) => e.domain === VAG_DOMAIN).map((e) => e.entry_id));
+
+  return devices
+    .filter((d) => d.config_entries.some((id) => vagEntryIds.has(id)))
+    .map((d) => {
+      // VAG Connect stores the VIN as the second member of identifiers
+      // (("vag_connect", VIN)). Falls back to undefined if absent.
+      const ident = d.identifiers.find(([dom]) => dom === VAG_DOMAIN);
+      const vin = ident ? ident[1] : undefined;
+      const manufacturer = (d.manufacturer || '').toLowerCase();
+      const brand = resolveVagBrand(manufacturer);
+      return {
+        id: d.id,
+        name: d.name_by_user || d.name || '',
+        model: d.model || '',
+        manufacturer: d.manufacturer || '',
+        brand,
+        vin,
+      };
+    });
+}
+
+/**
+ * Map a free-text manufacturer string to one of the supported VAG brand
+ * identifiers. Returns undefined if no match — caller renders a generic
+ * fallback logo.
+ */
+export function resolveVagBrand(manufacturer: string): VagBrand | undefined {
+  const m = manufacturer.toLowerCase().trim();
+  if (m.includes('audi')) return 'audi';
+  if (m.includes('škoda') || m.includes('skoda')) return 'skoda';
+  if (m.includes('cupra')) return 'cupra';
+  if (m.includes('seat')) return 'seat';
+  if (m.includes('porsche')) return 'porsche';
+  if (m.includes('volkswagen')) {
+    return m.includes('us') || m.includes('na') ? 'volkswagen_na' : 'volkswagen';
+  }
+  return undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Entity resolution — given a `config.entity` anchor (any VAG Connect
+// sensor for the target vehicle), scans the device-registry for all of
+// that device's entities and matches them against the `combinedFilters`
+// suffix table.
+// ---------------------------------------------------------------------------
 
 const getVehicleEntities = memoizeOne(
-  async (hass: HomeAssistant, config: { entity: string }, component: VehicleCard): Promise<VehicleEntities> => {
+  async (
+    hass: HomeAssistant,
+    config: { entity: string },
+    component: VagConnectCard
+  ): Promise<VehicleEntities> => {
     const entityState = hass.states[config.entity];
     if (!entityState) {
       component._entityNotFound = true;
-      console.log('Entity not found', component._entityNotFound);
+      return {};
     }
 
     const allEntities = await hass.callWS<Required<VehicleEntity>[]>({
       type: 'config/entity_registry/list',
     });
+
     const carEntity = allEntities.find((e) => e.entity_id === config.entity);
     if (!carEntity) {
-      console.log('Car entity not found');
+      console.warn('[vag-connect-card] Anchor entity not found in registry:', config.entity);
       return {};
     }
 
     const deviceEntities = allEntities
       .filter((e) => e.device_id === carEntity.device_id && e.hidden_by === null && e.disabled_by === null)
-      .filter((e) => hass.states[e.entity_id] && !['unavailable', 'unknown'].includes(hass.states[e.entity_id].state));
+      .filter(
+        (e) => hass.states[e.entity_id] && !['unavailable', 'unknown'].includes(hass.states[e.entity_id].state)
+      );
 
     const entityIds: VehicleEntities = {};
 
     for (const entityName of Object.keys(combinedFilters)) {
       const { prefix, suffix } = combinedFilters[entityName];
 
-      if (entityName === 'soc' || entityName === 'maxSoc') {
-        const specialName = entityName === 'soc' ? 'State of Charge' : 'Max State of Charge';
-        const entity = deviceEntities.find((e) => e.original_name === specialName);
-        if (entity) {
-          entityIds[entityName] = {
-            entity_id: entity.entity_id,
-            original_name: entity.original_name,
-          };
-        }
-        continue;
-      }
-
       const entity = deviceEntities.find((e) => {
         if (prefix) {
           return e.entity_id.startsWith(prefix) && e.entity_id.endsWith(suffix);
         }
-        return e.unique_id.endsWith(suffix) || e.entity_id.endsWith(suffix);
+        // VAG Connect unique_id pattern: `<VIN>_<translation_key>`. We
+        // also fall back to entity_id-suffix matching for users that have
+        // renamed their entity_ids manually.
+        return (e.unique_id && e.unique_id.endsWith(suffix)) || e.entity_id.endsWith(suffix);
       });
 
       if (entity) {
@@ -90,40 +154,69 @@ const getVehicleEntities = memoizeOne(
   }
 );
 
-async function getModelName(hass: HomeAssistant, entityCar: string): Promise<string> {
-  // Fetch all entities
+export async function getDeviceMeta(
+  hass: HomeAssistant,
+  entityId: string
+): Promise<{ name: string; model: string; manufacturer: string; brand: VagBrand | undefined } | null> {
   const allEntities = await hass.callWS<{ entity_id: string; device_id: string }[]>({
     type: 'config/entity_registry/list',
   });
-  // Find the car entity
-  const carEntity = allEntities.find((entity) => entity.entity_id === entityCar);
-  if (!carEntity) return '';
-  // console.log('Car Entity:', carEntity);
-  const deviceId = carEntity.device_id;
-  if (!deviceId) return '';
+  const carEntity = allEntities.find((e) => e.entity_id === entityId);
+  if (!carEntity?.device_id) return null;
 
-  // Fetch all devices
-  const allDevices = await hass.callWS<{ id: string; name: string; model: string }[]>({
+  const allDevices = await hass.callWS<
+    { id: string; name: string | null; name_by_user: string | null; model: string | null; manufacturer: string | null }[]
+  >({
     type: 'config/device_registry/list',
   });
-  // Find the device by ID
-  const device = allDevices.find((device) => device.id === deviceId);
-  if (!device) return '';
-  // console.log('Device:', device);
-  return device.model || '';
+  const device = allDevices.find((d) => d.id === carEntity.device_id);
+  if (!device) return null;
+
+  return {
+    name: device.name_by_user || device.name || '',
+    model: device.model || '',
+    manufacturer: device.manufacturer || '',
+    brand: resolveVagBrand(device.manufacturer || ''),
+  };
 }
 
 /**
- * Update config with changed properties
- * @param config
- * @param changedProps
- **/
-
+ * Best-effort default-anchor finder. Prefers the `battery_soc` sensor of
+ * the first VAG Connect device, falls back to `vehicle_state`. Returns
+ * empty string when no VAG entity is present.
+ */
 export function getCarEntity(hass: HomeAssistant): string {
-  console.log('Getting car entity');
-  const entities = Object.keys(hass.states).filter((entity) => entity.startsWith('sensor.') && entity.endsWith('_car'));
-  return entities[0] || '';
+  const ids = Object.keys(hass.states);
+  return (
+    ids.find((id) => id.startsWith('sensor.') && id.endsWith('_battery_soc')) ||
+    ids.find((id) => id.startsWith('sensor.') && id.endsWith('_vehicle_state')) ||
+    ''
+  );
 }
+
+// ---------------------------------------------------------------------------
+// VAG service invocation
+// ---------------------------------------------------------------------------
+
+/**
+ * Call a `vag_connect.*` service against a vehicle. `target` is one of
+ * the vehicle's entity_ids — typically the anchor (config.entity) — which
+ * HA resolves to the corresponding device + VIN server-side. Returns the
+ * call promise so callers can chain optimistic UI updates or toasts.
+ */
+export function callVagService(
+  hass: HomeAssistant,
+  serviceKey: keyof typeof VAG_SERVICES,
+  target: string,
+  data: Record<string, unknown> = {}
+): Promise<unknown> {
+  const service = VAG_SERVICES[serviceKey];
+  return hass.callService(VAG_DOMAIN, service, { entity_id: target, ...data });
+}
+
+// ---------------------------------------------------------------------------
+// Custom-button / card factories — generic, not VAG-specific
+// ---------------------------------------------------------------------------
 
 export async function createCustomButtons(
   hass: HomeAssistant,
@@ -168,7 +261,6 @@ export async function createCardElement(
   if (!cards) {
     return [];
   }
-  // Load the helpers and ensure they are available
   let helpers;
 
   if ((window as any).loadCardHelpers) {
@@ -177,7 +269,6 @@ export async function createCardElement(
     helpers = HELPERS;
   }
 
-  // Check if helpers were loaded and if createCardElement exists
   if (!helpers || !helpers.createCardElement) {
     console.error('Card helpers or createCardElement not available.');
     return [];
@@ -199,12 +290,8 @@ export async function createCardElement(
 }
 
 async function getTemplateValue(hass: HomeAssistant, templateConfig: string): Promise<string> {
-  if (!hass || !templateConfig) {
-    return '';
-  }
-
+  if (!hass || !templateConfig) return '';
   try {
-    // Prepare the body with the template
     const result = await hass.callApi<string>('POST', 'template', { template: templateConfig });
     return result;
   } catch (error) {
@@ -213,17 +300,10 @@ async function getTemplateValue(hass: HomeAssistant, templateConfig: string): Pr
 }
 
 async function getBooleanTemplate(hass: HomeAssistant, templateConfig: string): Promise<boolean> {
-  if (!hass || !templateConfig) {
-    return false;
-  }
-
+  if (!hass || !templateConfig) return false;
   try {
-    // Prepare the body with the template
     const result = await hass.callApi<string>('POST', 'template', { template: templateConfig });
-    if (result.trim().toLowerCase() === 'true') {
-      return true;
-    }
-    return false;
+    return result.trim().toLowerCase() === 'true';
   } catch (error) {
     console.error(`Error evaluating template: ${error}`);
     return false;
@@ -244,7 +324,7 @@ export async function getDefaultButton(
       cards: config[baseCard.config],
     },
   ];
-  const buttonCard = {
+  return {
     key: baseCard.type,
     default_name: baseCard.name,
     default_icon: baseCard.icon,
@@ -269,7 +349,6 @@ export async function getDefaultButton(
     custom_button: button?.enabled || false,
     custom_card: customCard ? await createCardElement(hass, verticalConfig) : [],
   };
-  return buttonCard;
 }
 
 export async function getAddedButton(
@@ -285,8 +364,8 @@ export async function getAddedButton(
       cards: addedCard.cards,
     },
   ];
-  const buttonCard = {
-    key: key,
+  return {
+    key,
     custom_button: button.enabled ?? false,
     button: {
       hidden: button.hide ?? false,
@@ -308,38 +387,33 @@ export async function getAddedButton(
     card_type: 'custom' as const,
     custom_card: customCard ? await createCardElement(hass, verticalConfig) : [],
   };
-  return buttonCard;
 }
+
+// ---------------------------------------------------------------------------
+// First-updated hooks
+// ---------------------------------------------------------------------------
 
 export async function handleFirstUpdated(editor: VehicleCardEditor): Promise<void> {
   if (!editor._latestRelease.version) {
-    console.log('Fetching latest release');
-
-    // Use Promise.all to run both async operations in parallel
     const [latestVersion, installed] = await Promise.all([
       fetchLatestReleaseTag(),
       installedByHACS(editor.hass as HomeAssistant),
     ]);
 
-    // Update component data after both promises resolve
-    editor._latestRelease.version = latestVersion;
+    editor._latestRelease.version = latestVersion ?? '';
     editor._latestRelease.hacs = !!installed;
-    editor._latestRelease.updated = latestVersion === CARD_VERSION;
-  } else {
-    console.log('Latest release already fetched');
+    editor._latestRelease.updated = (latestVersion ?? '') === CARD_VERSION;
   }
 
   const updates: Partial<VehicleCardConfig> = {};
 
   if (!editor._config.entity) {
-    console.log('Entity not found, fetching...');
     updates.entity = getCarEntity(editor.hass as HomeAssistant);
   } else if (!editor._modelName) {
-    const entity = editor._config.entity;
-    editor._modelName = await getModelName(editor.hass as HomeAssistant, entity);
+    const meta = await getDeviceMeta(editor.hass as HomeAssistant, editor._config.entity);
+    if (meta) editor._modelName = meta.model;
   } else if (editor._config.extra_configs?.section_order === undefined) {
-    let extraConfig = { ...(editor._config.extra_configs || {}) };
-    console.log('Section order not found, creating default...');
+    const extraConfig = { ...(editor._config.extra_configs || {}) };
     const section = {
       show_header_info: SECTION.HEADER_INFO,
       show_slides: SECTION.IMAGES_SLIDER,
@@ -347,7 +421,7 @@ export async function handleFirstUpdated(editor: VehicleCardEditor): Promise<voi
       show_buttons: SECTION.BUTTONS,
     };
 
-    let sectionOrder: string[] = [];
+    const sectionOrder: string[] = [];
     for (const sectionKey in section) {
       if (editor._config[sectionKey] === undefined || editor._config[sectionKey] === true) {
         sectionOrder.push(section[sectionKey]);
@@ -356,21 +430,14 @@ export async function handleFirstUpdated(editor: VehicleCardEditor): Promise<voi
 
     extraConfig.section_order = sectionOrder;
     updates.extra_configs = extraConfig;
-
-    console.log('Section order:', updates.extra_configs?.section_order);
   } else if (editor._config?.extra_configs?.images_swipe === undefined) {
-    let extraConfig = { ...(editor._config.extra_configs || {}) };
-    console.log('Images swipe not found, creating default...');
-    const defaultImageSwipe = defaultConfig.extra_configs.images_swipe;
-    extraConfig.images_swipe = defaultImageSwipe;
+    const extraConfig = { ...(editor._config.extra_configs || {}) };
+    extraConfig.images_swipe = defaultConfig.extra_configs.images_swipe;
     updates.extra_configs = extraConfig;
-    console.log('Images swipe:', updates.extra_configs?.images_swipe);
   }
 
   if (Object.keys(updates).length > 0) {
-    console.log('Updating config with:', updates);
     editor._config = { ...editor._config, ...updates };
-    console.log('New config:', editor._config);
     editor.configChanged();
   }
 }
@@ -382,9 +449,13 @@ async function installedByHACS(hass: HomeAssistant): Promise<boolean> {
     type: 'config/entity_registry/list',
   });
 
-  const hacsEntity = hacsEntities.find((entity) => entity.entity_id === CARD_UPADE_SENSOR);
-  return !!hacsEntity;
+  return !!hacsEntities.find((entity) => entity.entity_id === CARD_UPADE_SENSOR);
 }
+
+// ---------------------------------------------------------------------------
+// Map + address helpers — Maptiler stripped; HA built-in map is the
+// default popup, with OpenStreetMap / Google as optional reverse geocoders.
+// ---------------------------------------------------------------------------
 
 export async function createMapPopup(hass: HomeAssistant, config: VehicleCardConfig): Promise<LovelaceCardConfig[]> {
   const { default_zoom, hours_to_show, theme_mode } = config.map_popup_config || {};
@@ -392,8 +463,8 @@ export async function createMapPopup(hass: HomeAssistant, config: VehicleCardCon
     {
       type: 'map',
       default_zoom: default_zoom || 14,
-      hours_to_show: hours_to_show,
-      theme_mode: theme_mode,
+      hours_to_show,
+      theme_mode,
       entities: [
         {
           entity: config.device_tracker,
@@ -401,157 +472,117 @@ export async function createMapPopup(hass: HomeAssistant, config: VehicleCardCon
       ],
     },
   ];
-  console.log('Creating map popup:', haMapConfig);
   return await createCardElement(hass, haMapConfig);
 }
 
-export async function handleCardFirstUpdated(component: VehicleCard): Promise<void> {
+export async function handleCardFirstUpdated(component: VagConnectCard): Promise<void> {
   const hass = component._hass as HomeAssistant;
   const config = component.config as VehicleCardConfig;
-  const card = component as VehicleCard;
-  card.vehicleEntities = await getVehicleEntities(hass, config, component);
-  card.DataKeys = baseDataKeys(card.userLang);
-  if (!card.vehicleEntities) {
-    console.log('Vehicle entities not found, fetching...');
-    console.log('No vehicle entities found');
-    card._entityNotFound = true;
+  component.vehicleEntities = await getVehicleEntities(hass, config, component);
+  component.DataKeys = baseDataKeys(component.userLang);
+  if (!component.vehicleEntities || Object.keys(component.vehicleEntities).length === 0) {
+    component._entityNotFound = true;
   }
-  _getMapDat(card);
+
+  // Resolve manufacturer + model from the device-registry. We deliberately
+  // don't memo this across config-entity changes — it's cheap and keeps
+  // the brand header reactive when the user swaps vehicles in the editor.
+  try {
+    const meta = await getDeviceMeta(hass, config.entity);
+    if (meta) {
+      component._brandManufacturer = meta.manufacturer || '';
+      if (!config.model_name && meta.model) {
+        // Backfill model_name on the runtime config so the header has
+        // something useful to print even when the user never set it.
+        (component.config as any).model_name = meta.model;
+      }
+    }
+  } catch (e) {
+    console.warn('[vag-connect-card] Could not resolve device metadata:', e);
+  }
+
+  _getMapDat(component);
 }
 
-export async function _getSingleCard(card: VehicleCard): Promise<LovelaceCardConfig | void> {
+/**
+ * Single-map-card factory. The Mercedes original built a custom-styled
+ * Maptiler `extra-map-card`; we now return a plain HA `type: map` so
+ * we drop the Maptiler dependency. Custom styling is left to the user
+ * via the editor's Advanced view.
+ */
+export async function _getSingleCard(card: VagConnectCard): Promise<LovelaceCardConfig | void> {
   const config = card.config as VehicleCardConfig;
   if (!config.map_popup_config?.single_map_card || !config.device_tracker) return;
   const hass = card._hass as HomeAssistant;
   const mapConfig = config.map_popup_config;
-  const apiKey = config.extra_configs.maptiler_api_key!;
-  const deviceTrackerEntity = [
-    {
-      entity: config.device_tracker,
-      label_mode: mapConfig.label_mode,
-      attribute: mapConfig.attribute,
-      focus: true,
-    },
-  ];
-  const singleMapConfig = _convertToExtraMapConfig(
-    mapConfig,
-    apiKey,
-    config.map_popup_config.extra_entities || (deviceTrackerEntity as MapEntityConfig[])
-  );
 
-  const mapCardEl = await createCardElement(hass, [singleMapConfig]);
+  const haMapConfig = {
+    type: 'map',
+    default_zoom: mapConfig.default_zoom || 14,
+    hours_to_show: mapConfig.hours_to_show ?? 0,
+    theme_mode: mapConfig.theme_mode,
+    aspect_ratio: mapConfig.aspect_ratio,
+    auto_fit: mapConfig.auto_fit,
+    fit_zones: mapConfig.fit_zones,
+    entities:
+      mapConfig.extra_entities && mapConfig.extra_entities.length > 0
+        ? mapConfig.extra_entities
+        : [
+            {
+              entity: config.device_tracker,
+              label_mode: mapConfig.label_mode,
+              attribute: mapConfig.attribute,
+              focus: true,
+            },
+          ],
+  };
+
+  const mapCardEl = await createCardElement(hass, [haMapConfig]);
   return mapCardEl[0];
 }
 
-export async function _getMapDat(card: VehicleCard): Promise<void> {
+export async function _getMapDat(card: VagConnectCard): Promise<void> {
   const config = card.config as VehicleCardConfig;
   if (!config.show_map || !config.device_tracker || card._currentPreviewType !== null) return;
 
-  // console.log('Fetching map data...');
   const hass = card._hass as HomeAssistant;
-  const deviceTracker = config.device_tracker;
-  const mapData = {} as MapData;
-  const deviceStateObj = hass.states[deviceTracker];
+  const deviceStateObj = hass.states[config.device_tracker];
   if (!deviceStateObj) return;
   const { latitude, longitude, entity_picture } = deviceStateObj.attributes;
-  mapData.lat = latitude;
-  mapData.lon = longitude;
-  mapData.entityPic = entity_picture ?? undefined;
-  card.MapData = mapData;
-  // console.log('Map data:', mapData);
+  card.MapData = {
+    lat: latitude,
+    lon: longitude,
+    entityPic: entity_picture ?? undefined,
+    address: {},
+  };
 }
 
 export const _getMapAddress = memoizeOne(
-  async (card: VehicleCard, lat: number, lon: number): Promise<Address | undefined> => {
+  async (card: VagConnectCard, lat: number, lon: number): Promise<Address | undefined> => {
     if (card.config.map_popup_config?.show_address === false) return undefined;
 
     const apiKey = card.config?.google_api_key;
-    const maptilerKey = card.config.extra_configs?.maptiler_api_key;
     const usFormat = card.config.map_popup_config?.us_format;
-    // console.log('Getting address from map data');
-    const address = maptilerKey
-      ? await getAddressFromMapTiler(lat, lon, maptilerKey)
-      : apiKey
+    const address = apiKey
       ? await getAddressFromGoggle(lat, lon, apiKey)
       : await getAddressFromOpenStreet(lat, lon);
 
-    if (!address) {
-      return undefined;
-    }
+    if (!address) return undefined;
 
-    let formattedAddress: string;
-    if (usFormat) {
-      formattedAddress = `${address.streetNumber} ${address.streetName}`;
-    } else {
-      formattedAddress = `${address.streetName} ${address.streetNumber}`;
-    }
-
-    address.streetName = formattedAddress;
+    address.streetName = usFormat
+      ? `${address.streetNumber} ${address.streetName}`
+      : `${address.streetName} ${address.streetNumber}`;
     address.city = !address.sublocality ? address.city : address.sublocality;
-
-    // console.log('\x1B[93mvehicle-info-card\x1B[m\n', 'address:', address);
     return address;
   }
 );
 
-export async function getAddressFromMapTiler(lat: number, lon: number, apiKey: string): Promise<Address | null> {
-  // console.log('Getting address from MapTiler');
-  const filterParams: Record<string, keyof Address> = {
-    address: 'streetName', // Street name
-    locality: 'sublocality', // Sublocality
-    municipality: 'city', // City
-  };
-
-  const url = `https://api.maptiler.com/geocoding/${lon},${lat}.json?key=${apiKey}`;
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error('Failed to fetch address from MapTiler');
-    }
-
-    const data = await response.json();
-    if (data && data.features && data.features.length > 0) {
-      let address: Partial<Address> = {};
-
-      // Iterate through each feature
-      data.features.forEach((feature: any) => {
-        const placeType = feature.place_type[0]; // e.g. "address", "locality", "municipality"
-        if (filterParams[placeType]) {
-          const key = filterParams[placeType];
-          const text = feature.text;
-
-          // Check if the place type is an address and street number is available
-          if (placeType === 'address') {
-            address.streetNumber = feature.address ? `${feature.address}` : '';
-          }
-          // Assign filtered data to the corresponding property in the address object
-          address[key] = `${text}`;
-          // console.log(`Found ${key}:`, address[key], 'from', placeType);
-        }
-      });
-
-      // Validate if the necessary parts of the address were found
-      if (address.streetName && address.city) {
-        return address as Address;
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.warn('Error fetching address from MapTiler:', error);
-    return null;
-  }
-}
-
 async function getAddressFromGoggle(lat: number, lon: number, apiKey: string): Promise<Address | null> {
-  console.log('Getting address from Google');
   const filterParams: Record<string, keyof Address> = {
     street_number: 'streetNumber',
     route: 'streetName',
     neighborhood: 'sublocality',
   };
-
   const filterCity = ['locality', 'administrative_area_level_2', 'administrative_area_level_1'];
 
   const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`;
@@ -559,32 +590,21 @@ async function getAddressFromGoggle(lat: number, lon: number, apiKey: string): P
   try {
     const response = await fetch(url);
     const data = await response.json();
-    if (data.status !== 'OK') {
-      throw new Error('No results found');
-    }
+    if (data.status !== 'OK') throw new Error('No results found');
 
     const addressComponents = data.results[0].address_components;
-    let address: Partial<Address> = {};
+    const address: Partial<Address> = {};
 
     addressComponents.forEach((comp) => {
       const placeType = comp.types[0];
       if (filterParams[placeType]) {
-        const key = filterParams[placeType];
-        const text = comp.short_name;
-
-        address[key] = text;
-        // console.log(`Found ${key}:`, text, 'from', placeType);
+        address[filterParams[placeType]] = comp.short_name;
       } else if (filterCity.some((type) => comp.types.includes(type)) && !address.city) {
         address.city = comp.short_name;
-        // console.log('Found city:', address.city);
       }
     });
 
-    if (address.streetName && address.city) {
-      return address as Address;
-    }
-
-    return null;
+    return address.streetName && address.city ? (address as Address) : null;
   } catch (error) {
     console.warn('Error fetching address from Google:', error);
     return null;
@@ -594,15 +614,10 @@ async function getAddressFromGoggle(lat: number, lon: number, apiKey: string): P
 async function getAddressFromOpenStreet(lat: number, lon: number): Promise<Address | null> {
   try {
     const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2`);
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch address from OpenStreetMap');
-    }
+    if (!response.ok) throw new Error('Failed to fetch address from OpenStreetMap');
 
     const data = await response.json();
     const { house_number, road, suburb, village, city, town, neighbourhood } = data.address;
-    // console.log('Address:', data.address);
-
     return {
       streetNumber: house_number || '',
       streetName: road || '',
@@ -615,43 +630,18 @@ async function getAddressFromOpenStreet(lat: number, lon: number): Promise<Addre
   }
 }
 
-async function fetchLatestReleaseTag() {
-  const apiUrl = `https://api.github.com/repos/${REPOSITORY}/releases/latest`;
-
+async function fetchLatestReleaseTag(): Promise<string | undefined> {
   try {
-    const response = await fetch(apiUrl);
+    const response = await fetch(`https://api.github.com/repos/${REPOSITORY}/releases/latest`);
     if (response.ok) {
       const data = await response.json();
-      const releaseTag = data.tag_name;
-      return releaseTag;
-    } else {
-      console.error('Failed to fetch the latest release tag:', response.statusText);
+      return data.tag_name;
     }
   } catch (error) {
     console.error('Error fetching the latest release tag:', error);
   }
+  return undefined;
 }
-
-export const _convertToExtraMapConfig = (
-  config: MapPopupConfig,
-  apiKey: string,
-  entities: (MapEntityConfig | string)[] = []
-): ExtraMapCardConfig => {
-  return {
-    type: 'custom:extra-map-card',
-    api_key: apiKey,
-    entities,
-    custom_styles: config.map_styles,
-    aspect_ratio: config.aspect_ratio,
-    auto_fit: config.auto_fit,
-    fit_zones: config.fit_zones,
-    default_zoom: config.default_zoom,
-    hours_to_show: config.hours_to_show,
-    theme_mode: config.theme_mode,
-    history_period: config.history_period,
-    use_more_info: config.use_more_info,
-  };
-};
 
 export const hasActions = (config: ButtonActionConfig): boolean => {
   return Object.keys(config)

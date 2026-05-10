@@ -7,7 +7,17 @@ import { LitElement, html, css, TemplateResult, PropertyValues, CSSResultGroup, 
 import { customElement, state, property } from 'lit/decorators.js';
 import { styleMap } from 'lit/directives/style-map.js';
 
-import { MAPTILER_DIALOG_STYLES, DEFAULT_DIALOG_STYLES, DEFAULT_HOURS_TO_SHOW } from '../../const/maptiler-const';
+// maptiler-const was deleted with the Maptiler stack — inline the only
+// remaining bit we still need: default-hours-to-show + the default dialog
+// `<style>` block (kept here so the file is self-contained for now).
+const DEFAULT_HOURS_TO_SHOW = 0;
+const DEFAULT_DIALOG_STYLES = html`<style>
+  ha-dialog {
+    --mdc-dialog-min-width: min(100vw, 600px);
+    --mdc-dialog-max-width: 100vw;
+    --mdc-dialog-max-height: 100vh;
+  }
+</style>`;
 import {
   HistoryStates,
   isComponentLoaded,
@@ -19,10 +29,9 @@ import {
   HomeAssistant,
 } from '../../types';
 import { LovelaceCardConfig } from '../../types/ha-frontend/lovelace/lovelace';
-import { _getHistoryPoints, _getMapAddress, createMapPopup } from '../../utils';
+import { _getMapAddress, createMapPopup } from '../../utils';
 import { createCloseHeading } from '../../utils/create';
-import './vic-maptiler-popup';
-import { VehicleCard } from '../../vehicle-info-card';
+import { VagConnectCard } from '../../vag-connect-card';
 
 export interface MapConfig extends MapPopupConfig {
   device_tracker: string;
@@ -30,11 +39,11 @@ export interface MapConfig extends MapPopupConfig {
   maptiler_api_key?: string;
 }
 
-@customElement('vehicle-map')
-export class VehicleMap extends LitElement {
+@customElement('vag-map')
+export class VagMap extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) mapData!: MapData;
-  @property({ attribute: false }) card!: VehicleCard;
+  @property({ attribute: false }) card!: VagConnectCard;
   @property({ type: Boolean }) isDark!: boolean;
   @property({ type: Boolean }) open!: boolean;
 
@@ -255,7 +264,6 @@ export class VehicleMap extends LitElement {
   }
 
   protected render(): TemplateResult {
-    const maptiler_api_key = this.card.config.extra_configs?.maptiler_api_key;
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     return html`
       <div class="map-wrapper" ?safari=${isSafari} style=${this._computeMapStyle()}>
@@ -268,7 +276,7 @@ export class VehicleMap extends LitElement {
         <div id="map"></div>
       </div>
 
-      ${maptiler_api_key ? this._renderMaptilerDialog() : this._renderMapDialog()}
+      ${this._renderMapDialog()}
     `;
   }
 
@@ -295,29 +303,6 @@ export class VehicleMap extends LitElement {
           <div class="address-info">${addressContent}</div>
         </div>`
       : html``;
-  }
-
-  private _renderMaptilerDialog(): TemplateResult | typeof nothing {
-    const maptiler_api_key = this.card.config.extra_configs?.maptiler_api_key;
-    if (!this.open || !maptiler_api_key) return nothing;
-
-    this._historyPoints = _getHistoryPoints(this.card.config!, this._stateHistory);
-
-    return html`
-      <ha-dialog open @closed=${() => (this.open = false)} hideActions flexContent>
-        ${MAPTILER_DIALOG_STYLES}
-
-        <vic-maptiler-popup
-          .mapData=${this.mapData}
-          .card=${this.card}
-          ._mapConfig=${this.mapConfig}
-          ._paths=${this._historyPoints}
-          @close-dialog=${() => {
-            this.open = false;
-          }}
-        ></vic-maptiler-popup>
-      </ha-dialog>
-    `;
   }
 
   private _renderMapDialog(): TemplateResult | typeof nothing {
@@ -567,6 +552,6 @@ export class VehicleMap extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vehicle-map': VehicleMap;
+    'vag-map': VagMap;
   }
 }

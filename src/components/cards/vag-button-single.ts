@@ -10,7 +10,7 @@ import mainstyle from '../../css/styles.css';
 import { ButtonCardEntity, HomeAssistant, VehicleCardConfig, BUTTON_LAYOUT } from '../../types';
 import { RenderTemplateResult, subscribeRenderTemplate } from '../../types/ha-frontend/data/ws-templates';
 import { addActions, hasActions, hasTemplate } from '../../utils';
-import { VehicleButtons } from './vic-vehicle-buttons';
+import { VagButtons } from './vag-vehicle-buttons';
 
 const TEMPLATE_KEYS = [
   'secondary',
@@ -25,11 +25,11 @@ type TemplateKey = (typeof TEMPLATE_KEYS)[number];
 
 const COLOR_AlPHA = '.2';
 
-@customElement('vic-button-single')
-export class VicButtonSingle extends LitElement {
+@customElement('vag-button-single')
+export class VagButtonSingle extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) _config!: VehicleCardConfig;
-  @property({ attribute: false }) _card!: VehicleButtons;
+  @property({ attribute: false }) _card!: VagButtons;
   @property({ attribute: false }) _button!: ButtonCardEntity;
   @property({ attribute: 'layout', type: String }) layout?: BUTTON_LAYOUT;
 
@@ -610,6 +610,6 @@ export class VicButtonSingle extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vic-button-single': VicButtonSingle;
+    'vag-button-single': VagButtonSingle;
   }
 }

@@ -1,6 +1,7 @@
 {
-    "name": "Vehicle Info Card",
-    "render_readme": true,
-    "filename": "vehicle-info-card.js",
-    "content_in_root": false
+  "name": "VAG Connect Card",
+  "render_readme": true,
+  "filename": "vag-connect-card.js",
+  "content_in_root": false,
+  "homeassistant": "2024.4.0"
 }

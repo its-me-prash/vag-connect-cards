@@ -1,6 +1,18 @@
-import { MapEntityConfig } from 'extra-map-card';
-
 import { LovelaceCardConfig, ActionConfig } from '../types';
+
+/**
+ * Map-entity shape used by the map-popup sub-card. Was imported from
+ * `extra-map-card` in the Mercedes original; replaced by a local shim
+ * since the dependency was dropped together with the Maptiler stack.
+ */
+export interface MapEntityConfig {
+  entity: string;
+  label_mode?: 'name' | 'state' | 'attribute' | 'icon';
+  attribute?: string;
+  focus?: boolean;
+  name?: string;
+  color?: string;
+}
 
 /**
  * Configuration interface for the Vehicle Card.
@@ -231,8 +243,8 @@ export interface VehicleCardConfig extends LovelaceCardConfig, SHOW_OPTIONS {
 // Default configuration for the Vehicle Card.
 
 export const defaultConfig = {
-  type: 'custom:vehicle-info-card',
-  name: 'Mercedes Vehicle Card',
+  type: 'custom:vag-connect-card',
+  name: 'VAG Connect Card',
   entity: '',
   model_name: '',
   selected_language: 'system',
