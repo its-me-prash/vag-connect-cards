@@ -180,6 +180,43 @@
       "infoServices": "Aktiviere die Dienste, die du über die Karte steuern möchtest.",
       "infoButton": "Karten-Buttons konfigurieren."
     },
+    "entityConfig": {
+      "title": "Entität & Name",
+      "desc": "Wähle einen beliebigen VAG-Connect-Sensor deines Fahrzeugs — der Rest wird automatisch erkannt."
+    },
+    "buttonConfig": {
+      "title": "Karten-Buttons",
+      "desc": "Konfiguriere die Buttons, die in der Karte angezeigt werden",
+      "deleteConfirm": "Diesen Button wirklich löschen?",
+      "toastNewCard": "Neue Karte hinzugefügt"
+    },
+    "customButtonConfig": {
+      "title": "Eigene Buttons",
+      "info": "Aussehen und Verhalten dieses Buttons anpassen."
+    },
+    "mapConfig": {
+      "title": "Karte",
+      "desc": "Mini-Karte und Karten-Popup-Optionen."
+    },
+    "imagesConfig": {
+      "title": "Bilder",
+      "desc": "Bilder-Slider im Header — wähle ein oder mehrere Fahrzeug-Renderings.",
+      "selectAll": "Alle auswählen",
+      "deselectAll": "Auswahl aufheben",
+      "deleteSelected": "Ausgewählte löschen"
+    },
+    "servicesConfig": {
+      "title": "Dienste",
+      "desc": "VAG-Connect-Aktionen aktivieren (Lock, Klima, Laden …)."
+    },
+    "themeLangConfig": {
+      "title": "Theme & Sprache",
+      "desc": "Theme-Modus + Karten-Sprache."
+    },
+    "showConfig": {
+      "title": "Sichtbarkeit",
+      "desc": "Sektionen der Karte ein-/ausblenden."
+    },
     "showOpts": {
       "show_slides": "Bild-Slider anzeigen",
       "show_buttons": "Buttons anzeigen",
@@ -190,14 +227,6 @@
       "show_address": "Adresse anzeigen",
       "enable_services_control": "Dienstesteuerung aktivieren",
       "show_error_notify": "Fehlerbenachrichtigungen anzeigen"
-    },
-    "buttonConfig": {
-      "desc": "Konfiguriere die Buttons, die in der Karte angezeigt werden",
-      "deleteConfirm": "Diesen Button wirklich löschen?",
-      "toastNewCard": "Neue Karte hinzugefügt"
-    },
-    "customButtonConfig": {
-      "info": "Aussehen und Verhalten dieses Buttons anpassen."
     },
     "customTireBackground": {
       "info": "Eigener Hintergrund für das alte Reifen-Layout (für Rückwärtskompatibilität)."

@@ -180,6 +180,43 @@
       "infoServices": "Activez les services à contrôler depuis la carte.",
       "infoButton": "Configurer les boutons de la carte."
     },
+    "entityConfig": {
+      "title": "Entité & Nom",
+      "desc": "Choisis n'importe quel capteur VAG Connect — le reste est détecté automatiquement."
+    },
+    "buttonConfig": {
+      "title": "Boutons de la carte",
+      "desc": "Configurer les boutons affichés dans la carte",
+      "deleteConfirm": "Supprimer ce bouton ?",
+      "toastNewCard": "Nouvelle carte ajoutée"
+    },
+    "customButtonConfig": {
+      "title": "Boutons personnalisés",
+      "info": "Personnaliser l'apparence et le comportement de ce bouton."
+    },
+    "mapConfig": {
+      "title": "Carte",
+      "desc": "Mini-carte et options de fenêtre carte."
+    },
+    "imagesConfig": {
+      "title": "Images",
+      "desc": "Diaporama d'images d'en-tête — choisir une ou plusieurs photos du véhicule.",
+      "selectAll": "Tout sélectionner",
+      "deselectAll": "Tout désélectionner",
+      "deleteSelected": "Supprimer la sélection"
+    },
+    "servicesConfig": {
+      "title": "Services",
+      "desc": "Activer les actions VAG Connect (verrouillage, climatisation, charge …)."
+    },
+    "themeLangConfig": {
+      "title": "Thème & Langue",
+      "desc": "Mode de thème + langue de la carte."
+    },
+    "showConfig": {
+      "title": "Visibilité",
+      "desc": "Activer/désactiver les sections de la carte."
+    },
     "showOpts": {
       "show_slides": "Afficher le diaporama d'images",
       "show_buttons": "Afficher les boutons",
@@ -190,14 +227,6 @@
       "show_address": "Afficher l'adresse",
       "enable_services_control": "Activer le contrôle des services",
       "show_error_notify": "Afficher les notifications d'erreur"
-    },
-    "buttonConfig": {
-      "desc": "Configurer les boutons affichés dans la carte",
-      "deleteConfirm": "Supprimer ce bouton ?",
-      "toastNewCard": "Nouvelle carte ajoutée"
-    },
-    "customButtonConfig": {
-      "info": "Personnaliser l'apparence et le comportement de ce bouton."
     },
     "customTireBackground": {
       "info": "Arrière-plan personnalisé pour l'ancien layout pneus (rétro-compatibilité)."

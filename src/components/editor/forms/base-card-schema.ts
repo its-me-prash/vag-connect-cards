@@ -6,7 +6,7 @@ export const ENTITY_CARD_NAME_SCHEMA = memoizeOne(
       {
         name: 'entity',
         selector: {
-          entity: { filter: { integration: 'mbapi2020' } },
+          entity: { filter: { integration: 'vag_connect' } },
         },
         required: true,
       },

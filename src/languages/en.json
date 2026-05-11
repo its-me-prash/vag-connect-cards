@@ -180,6 +180,43 @@
       "infoServices": "Enable the services you want to control from the card.",
       "infoButton": "Configure the card buttons."
     },
+    "entityConfig": {
+      "title": "Entity & Name",
+      "desc": "Pick any VAG Connect sensor for your vehicle — the card auto-discovers the rest."
+    },
+    "buttonConfig": {
+      "title": "Card Buttons",
+      "desc": "Configure the buttons displayed in the card",
+      "deleteConfirm": "Are you sure you want to delete this button?",
+      "toastNewCard": "New card added"
+    },
+    "customButtonConfig": {
+      "title": "Custom Buttons",
+      "info": "Customise the appearance and behaviour of this button."
+    },
+    "mapConfig": {
+      "title": "Map",
+      "desc": "Mini-map and map popup options."
+    },
+    "imagesConfig": {
+      "title": "Images",
+      "desc": "Header image slider — pick one or more car renders.",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "deleteSelected": "Delete selected"
+    },
+    "servicesConfig": {
+      "title": "Services",
+      "desc": "Enable VAG Connect actions (lock, climate, charging, …)."
+    },
+    "themeLangConfig": {
+      "title": "Theme & Language",
+      "desc": "Theme mode + card language."
+    },
+    "showConfig": {
+      "title": "Visibility",
+      "desc": "Toggle card sections on / off."
+    },
     "showOpts": {
       "show_slides": "Show image slider",
       "show_buttons": "Show buttons",
@@ -190,14 +227,6 @@
       "show_address": "Show address",
       "enable_services_control": "Enable services control",
       "show_error_notify": "Show error notifications"
-    },
-    "buttonConfig": {
-      "desc": "Configure the buttons displayed in the card",
-      "deleteConfirm": "Are you sure you want to delete this button?",
-      "toastNewCard": "New card added"
-    },
-    "customButtonConfig": {
-      "info": "Customise the appearance and behaviour of this button."
     },
     "customTireBackground": {
       "info": "Custom background for the legacy tyre layout (kept for back-compat)."
