@@ -501,7 +501,96 @@ export async function handleCardFirstUpdated(component: VagConnectCard): Promise
     console.warn('[vag-connect-card] Could not resolve device metadata:', e);
   }
 
+  // Auto-image-slider: if the user hasn't configured any images, discover
+  // the VAG Connect `image.<slug>_render_*` entities of this car and use
+  // them. Preference order matches the integration's image quality tiers
+  // (side_lg = recommended big render, angle_lg = 3/4 view, etc.).
+  if (!config.images || config.images.length === 0) {
+    try {
+      const renders = await discoverRenderImages(hass, config.entity);
+      if (renders.length > 0) {
+        (component.config as any).images = renders;
+      }
+    } catch (e) {
+      console.warn('[vag-connect-card] Could not auto-discover render images:', e);
+    }
+  }
+
+  // Auto device_tracker: same pattern — pick `device_tracker.<slug>_position`
+  // of this car if the user hasn't set one. Allows the map section to work
+  // out-of-the-box.
+  if (!config.device_tracker) {
+    try {
+      const tracker = await discoverDeviceTracker(hass, config.entity);
+      if (tracker) {
+        (component.config as any).device_tracker = tracker;
+      }
+    } catch (e) {
+      console.warn('[vag-connect-card] Could not auto-discover device_tracker:', e);
+    }
+  }
+
   _getMapDat(component);
+}
+
+/**
+ * Find every `image.*` entity belonging to the same device as `anchorEntityId`
+ * and return them as a `[{url, title}]` list suitable for VAG Connect's
+ * image slider. URLs are HA `/api/image_proxy/<entity_id>?token=...` paths
+ * — HA handles auth automatically when the user is logged in.
+ */
+async function discoverRenderImages(
+  hass: HomeAssistant,
+  anchorEntityId: string
+): Promise<{ url: string; title: string }[]> {
+  const allEntities = await hass.callWS<{ entity_id: string; device_id: string; original_name: string }[]>({
+    type: 'config/entity_registry/list',
+  });
+  const anchor = allEntities.find((e) => e.entity_id === anchorEntityId);
+  if (!anchor?.device_id) return [];
+
+  const imageEntities = allEntities
+    .filter((e) => e.device_id === anchor.device_id && e.entity_id.startsWith('image.'))
+    .filter((e) => hass.states[e.entity_id]);
+
+  // Prefer the larger renders so the slider looks good; cap to ~5 so a
+  // car with all 7 quality tiers doesn't flood the UI.
+  const priority = ['side_lg', 'angle_lg', 'angle_hd', 'side_sm', 'medium', 'small', 'icon'];
+  imageEntities.sort((a, b) => {
+    const ai = priority.findIndex((p) => a.entity_id.endsWith('_render_' + p));
+    const bi = priority.findIndex((p) => b.entity_id.endsWith('_render_' + p));
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+
+  return imageEntities.slice(0, 5).map((e) => {
+    const stateObj = hass.states[e.entity_id];
+    // image entities expose either an `entity_picture` attribute (proxied)
+    // or a direct `image_url`. Prefer entity_picture so HA handles auth.
+    const url =
+      (stateObj?.attributes?.entity_picture as string) ||
+      (stateObj?.attributes?.image_url as string) ||
+      `/api/image_proxy/${e.entity_id}`;
+    const title = e.original_name || e.entity_id.replace(/^image\./, '');
+    return { url, title };
+  });
+}
+
+/**
+ * Find the `device_tracker.<slug>_position` entity of the same device as
+ * `anchorEntityId`. Returns the entity_id (or undefined when the car has
+ * no position tracker — e.g. integration in read-only mode).
+ */
+async function discoverDeviceTracker(hass: HomeAssistant, anchorEntityId: string): Promise<string | undefined> {
+  const allEntities = await hass.callWS<{ entity_id: string; device_id: string }[]>({
+    type: 'config/entity_registry/list',
+  });
+  const anchor = allEntities.find((e) => e.entity_id === anchorEntityId);
+  if (!anchor?.device_id) return undefined;
+
+  const tracker = allEntities.find(
+    (e) => e.device_id === anchor.device_id && e.entity_id.startsWith('device_tracker.')
+  );
+  return tracker?.entity_id;
 }
 
 /**

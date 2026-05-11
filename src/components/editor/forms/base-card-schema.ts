@@ -5,8 +5,15 @@ export const ENTITY_CARD_NAME_SCHEMA = memoizeOne(
     [
       {
         name: 'entity',
+        // VAG Connect's entity-registry "platform" field is `vag_connect`, but
+        // HA's frontend entity-selector `filter: { integration: ... }` is
+        // strict on some installs and silently returns 0 matches. We fall
+        // back to a plain domain filter (sensors) so the dropdown is never
+        // empty — the user picks any sensor of their car (battery_soc is the
+        // canonical anchor) and the card auto-resolves the device + rest of
+        // the entities from the device registry.
         selector: {
-          entity: { filter: { integration: 'vag_connect' } },
+          entity: { domain: ['sensor'] },
         },
         required: true,
       },
