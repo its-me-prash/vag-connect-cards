@@ -1,6 +1,6 @@
 {
   "name": "vag-connect-card",
-  "version": "0.1.0-beta.3",
+  "version": "0.1.0-beta.4",
   "description": "Home Assistant Lovelace card for the VAG Connect integration (Audi · VW · Škoda · SEAT · CUPRA · Porsche · VW US/CA)",
   "keywords": [
     "home-assistant",

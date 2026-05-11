@@ -535,11 +535,97 @@ export class VehicleCardEditor extends LitElement implements LovelaceCardEditor 
   }
 
   private _renderMapPopupConfig(): TemplateResult {
-    // Map editor panel was Maptiler-specific in the Mercedes original;
-    // dropped together with the @maptiler/sdk + extra-map-card deps.
-    // Phase F (setup wizard) will replace it with a slim "device_tracker
-    // + default_zoom + hours_to_show" form.
-    return html`<div class="info-alert">Map popup configuration is being rebuilt for VAG — coming in the wizard.</div>`;
+    const mapPopup = this._config.map_popup_config || {};
+    const DATA = {
+      device_tracker: this._config.device_tracker || '',
+      show_map: this._config.show_map ?? false,
+      enable_map_popup: this._config.enable_map_popup ?? false,
+      hours_to_show: mapPopup.hours_to_show ?? 0,
+      default_zoom: mapPopup.default_zoom ?? 14,
+      theme_mode: mapPopup.theme_mode ?? 'auto',
+      google_api_key: this._config.google_api_key || '',
+    };
+
+    const MAP_SCHEMA = [
+      {
+        name: 'show_map',
+        label: this.localize('editor.showOpts.show_map'),
+        selector: { boolean: {} },
+      },
+      {
+        name: 'enable_map_popup',
+        label: this.localize('editor.showOpts.enable_map_popup'),
+        selector: { boolean: {} },
+      },
+      {
+        name: 'device_tracker',
+        label: this.localize('editor.mapConfig.device_tracker') || 'Device tracker',
+        selector: { entity: { domain: ['device_tracker'] } },
+      },
+      {
+        name: '',
+        type: 'grid',
+        column_min_width: '140px',
+        schema: [
+          {
+            name: 'default_zoom',
+            label: this.localize('editor.mapConfig.default_zoom') || 'Default zoom',
+            selector: { number: { min: 1, max: 20, step: 1, mode: 'box' } },
+          },
+          {
+            name: 'hours_to_show',
+            label: this.localize('editor.mapConfig.hours_to_show') || 'Hours to show',
+            selector: { number: { min: 0, max: 168, step: 1, mode: 'box' } },
+          },
+          {
+            name: 'theme_mode',
+            label: this.localize('editor.mapConfig.theme_mode') || 'Theme mode',
+            selector: {
+              select: {
+                mode: 'dropdown',
+                options: [
+                  { value: 'auto', label: 'Auto' },
+                  { value: 'light', label: 'Light' },
+                  { value: 'dark', label: 'Dark' },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      {
+        name: 'google_api_key',
+        label: this.localize('editor.mapConfig.google_api_key') || 'Google Geocoding API key (optional)',
+        selector: { text: {} },
+      },
+    ];
+
+    // Flatten the popup-level fields when the user changes them so the
+    // produced YAML stays compatible with the original Mercedes config shape.
+    return html`
+      <ha-form
+        .hass=${this.hass}
+        .data=${DATA}
+        .schema=${MAP_SCHEMA}
+        .computeLabel=${(field: { label?: string; name: string }) => field.label || field.name}
+        @value-changed=${(ev: CustomEvent) => {
+          const v = ev.detail.value as typeof DATA;
+          const newConfig: any = { ...this._config };
+          newConfig.show_map = v.show_map;
+          newConfig.enable_map_popup = v.enable_map_popup;
+          newConfig.device_tracker = v.device_tracker;
+          newConfig.google_api_key = v.google_api_key;
+          newConfig.map_popup_config = {
+            ...(this._config.map_popup_config || {}),
+            hours_to_show: v.hours_to_show,
+            default_zoom: v.default_zoom,
+            theme_mode: v.theme_mode,
+          };
+          this._config = newConfig;
+          this.configChanged();
+        }}
+      ></ha-form>
+    `;
   }
 
   private _renderServicesConfig(): TemplateResult {

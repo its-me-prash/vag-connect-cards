@@ -196,7 +196,12 @@
     },
     "mapConfig": {
       "title": "Map",
-      "desc": "Mini-map and map popup options."
+      "desc": "Mini-map and map popup options.",
+      "device_tracker": "Device tracker entity",
+      "default_zoom": "Default zoom",
+      "hours_to_show": "Hours of history",
+      "theme_mode": "Theme mode",
+      "google_api_key": "Google Maps API key (optional, for address resolution)"
     },
     "imagesConfig": {
       "title": "Images",

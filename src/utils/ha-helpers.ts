@@ -524,6 +524,12 @@ export async function handleCardFirstUpdated(component: VagConnectCard): Promise
       const tracker = await discoverDeviceTracker(hass, config.entity);
       if (tracker) {
         (component.config as any).device_tracker = tracker;
+        // Default show_map to true when we just auto-found a tracker AND
+        // the user has not explicitly opted out. Without this the section
+        // stays hidden because defaultConfig.show_map = false.
+        if (config.show_map === undefined) {
+          (component.config as any).show_map = true;
+        }
       }
     } catch (e) {
       console.warn('[vag-connect-card] Could not auto-discover device_tracker:', e);

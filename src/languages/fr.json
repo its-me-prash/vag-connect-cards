@@ -196,7 +196,12 @@
     },
     "mapConfig": {
       "title": "Carte",
-      "desc": "Mini-carte et options de fenêtre carte."
+      "desc": "Mini-carte et options de fenêtre carte.",
+      "device_tracker": "Entité device_tracker",
+      "default_zoom": "Zoom par défaut",
+      "hours_to_show": "Heures d'historique",
+      "theme_mode": "Mode thème",
+      "google_api_key": "Clé API Google Maps (optionnel, géocodage adresse)"
     },
     "imagesConfig": {
       "title": "Images",
