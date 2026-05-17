@@ -76,7 +76,8 @@
       "requestsRemaining": "Quota API restant",
       "wakeCountToday": "Réveils aujourd'hui",
       "connectionState": "Connexion",
-      "lastUpdatedAt": "Dernière communication"
+      "lastUpdatedAt": "Dernière communication",
+      "daysUnit": "j"
     },
     "tyreCard": {
       "batteryTitle": "Batterie",

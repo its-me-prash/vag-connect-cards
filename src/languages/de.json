@@ -76,7 +76,8 @@
       "requestsRemaining": "API-Kontingent verbleibend",
       "wakeCountToday": "Weckungen heute",
       "connectionState": "Verbindung",
-      "lastUpdatedAt": "Zuletzt gesehen"
+      "lastUpdatedAt": "Zuletzt gesehen",
+      "daysUnit": "T"
     },
     "tyreCard": {
       "batteryTitle": "Akku",

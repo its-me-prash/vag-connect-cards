@@ -76,7 +76,8 @@
       "requestsRemaining": "API quota remaining",
       "wakeCountToday": "Wakes today",
       "connectionState": "Connection",
-      "lastUpdatedAt": "Last seen"
+      "lastUpdatedAt": "Last seen",
+      "daysUnit": "d"
     },
     "tyreCard": {
       "batteryTitle": "Battery",

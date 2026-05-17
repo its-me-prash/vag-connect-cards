@@ -448,9 +448,17 @@ export class VagConnectCard extends LitElement implements LovelaceCard {
    */
   private _renderBrandHeader(): TemplateResult {
     const customLogo = (this.config as any).brand_logo_url as string | undefined;
-    const modelName = this.config.model_name || '';
+    const rawModel = this.config.model_name || '';
     const vin = this.carVinNumber || '';
     const vinShort = vin ? vin.slice(-6) : '';
+
+    // Some VAG-Connect devices report the VIN in `device.model` (no clean
+    // marketing name available from the backend). When that happens the
+    // header would otherwise read "AUDI WAUZZZF43JA027519". Detect that
+    // shape (17-char alphanumeric, no spaces) and suppress it so the
+    // sub-line VIN ··· label carries the info instead.
+    const looksLikeVin = /^[A-HJ-NPR-Z0-9]{17}$/i.test(rawModel.replace(/\s/g, ''));
+    const modelName = looksLikeVin ? '' : rawModel;
 
     const brand = (this._brandManufacturer || '').toLowerCase();
     const isOnline = this.vehicleEntities.isOnline?.entity_id
@@ -1430,28 +1438,46 @@ export class VagConnectCard extends LitElement implements LovelaceCard {
   }
 
   public getSecondaryInfo(cardType: string): string {
-    const { odometer, lockSensor, ecoScoreBonusRange } = this.vehicleEntities;
+    const { odometer, doorsLocked, soc, serviceDueInDays, chargingState } = this.vehicleEntities;
+    const lang = this.userLang;
 
     switch (cardType) {
       case 'tripCards':
+        // Odometer (km) — same intent as Mercedes original
         return this.getStateDisplay(odometer?.entity_id);
 
-      case 'vehicleCards':
-        const lang = this.userLang;
-        const lockState = this.getEntityState(lockSensor?.entity_id);
-        const realState = StateMapping.lockStates(lang)[lockState] || StateMapping.lockStates['4'];
+      case 'vehicleCards': {
+        // VAG: binary_sensor.<vin>_doors_locked  (on = unlocked, off = locked)
+        const state = this.getEntityState(doorsLocked?.entity_id);
+        if (!state) return '';
+        const m = StateMapping.lockStates(lang) as Record<string, string>;
+        return m[state] || this.localize('card.common.stateUnknown');
+      }
 
-        return realState;
+      case 'ecoCards': {
+        // Service & Diagnostics — show service-due-in-days when present
+        const days = this.getEntityState(serviceDueInDays?.entity_id);
+        if (!days) return '';
+        const n = parseInt(days, 10);
+        return Number.isFinite(n) ? `${n} ${this.localize('card.ecoCard.daysUnit') || 'd'}` : days;
+      }
 
-      case 'ecoCards':
-        return this.getStateDisplay(ecoScoreBonusRange?.entity_id);
-
-      case 'tyreCards':
-        const secondaryInfoTyres = this.getMinMaxTyrePressure();
-        return secondaryInfoTyres;
+      case 'tyreCards': {
+        // Battery & Charging — show SoC + charging-state (was Mercedes
+        // tyre-pressure min/max which produced `Infinity - -Infinity`
+        // when the DataKeys.tyrePressures array is empty on VAG).
+        const socStr = soc?.entity_id ? this.getStateDisplay(soc.entity_id) : '';
+        const chargeStateRaw = chargingState?.entity_id
+          ? this.getEntityState(chargingState.entity_id)
+          : '';
+        const m = StateMapping.chargingState(lang).state as Record<string, string>;
+        const chargeLabel = chargeStateRaw && m[chargeStateRaw] ? m[chargeStateRaw] : '';
+        if (socStr && chargeLabel) return `${socStr} · ${chargeLabel}`;
+        return socStr || chargeLabel || '';
+      }
 
       default:
-        return 'Unknown Card';
+        return '';
     }
   }
 
