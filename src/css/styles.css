@@ -85,11 +85,10 @@ ha-card[no-header].__map_single {
 }
 
 header h1 {
-  color: var(--ha-card-header-color, --primary-text-color);
-  font-family: serif !important;
-  font-size: 24px;
+  color: var(--ha-card-header-color, var(--primary-text-color));
+  /* Inherit HA's card-header font (was Mercedes hard-coded 'serif !important'). */
+  font-family: var(--ha-card-header-font-family, var(--paper-font-headline_-_font-family, inherit));
   font-size: var(--ha-card-header-font-size, 24px);
-  /* letter-spacing: -0.012em; */
   line-height: 2rem;
   display: block;
   margin-top: 0px;
@@ -639,7 +638,8 @@ dialog::backdrop {
   font-size: 0.9rem;
   letter-spacing: 1.2px;
   color: var(--primary-text-color);
-  font-family: 'Helvetica Neue', Roboto, system-ui, sans-serif;
+  /* Inherit the user's HA theme font instead of forcing Helvetica/Roboto. */
+  font-family: inherit;
 }
 
 .vag-brand-header[brand="audi"] .brand-wordmark   { letter-spacing: 4px; }
