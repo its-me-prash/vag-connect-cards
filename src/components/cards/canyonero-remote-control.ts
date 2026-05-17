@@ -4,22 +4,22 @@ import { fireEvent, forwardHaptic } from 'custom-card-helpers';
 import { LitElement, html, TemplateResult, CSSResultGroup, nothing } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 
+import { Canyonero } from '../../canyonero-vehicle-dashboard';
 import { ControlServiceData, tempSelectOptions } from '../../const/remote-control-keys';
 import styles from '../../css/remote-control.css';
 import mainstyle from '../../css/styles.css';
 import { HomeAssistant } from '../../types';
 import { convertToMinutes } from '../../utils';
-import { VagConnectCard } from '../../vag-connect-card';
 
 const enum PRECOND {
   TIME = 'time',
   ZONE_TEMP = 'zone_temp',
 }
 
-@customElement('vag-remote-control')
-export class VagRemoteControl extends LitElement {
+@customElement('canyonero-remote-control')
+export class CanyoneroRemoteControl extends LitElement {
   @property({ attribute: false }) hass!: HomeAssistant;
-  @property({ attribute: false }) card!: VagConnectCard;
+  @property({ attribute: false }) card!: Canyonero;
   @property({ attribute: false }) private selectedServices!: { [key: string]: { name: string; icon: string } };
 
   @state() private subcardType: string | null = null;
@@ -780,6 +780,6 @@ export class VagRemoteControl extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vag-remote-control': VagRemoteControl;
+    'canyonero-remote-control': CanyoneroRemoteControl;
   }
 }

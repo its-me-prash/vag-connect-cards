@@ -3,14 +3,14 @@ import { LitElement, html, CSSResultGroup, nothing, PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
 import editorcss from '../../css/editor.css';
-import { VehicleCardEditor } from '../../editor';
+import { CanyoneroEditor } from '../../editor';
 import { HomeAssistant, VehicleCardConfig } from '../../types';
 import { fireEvent } from '../../types/ha-frontend/fire-event';
 
 @customElement('custom-yaml-editor')
 export class CustomYamlEditor extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
-  @property({ attribute: false }) editor!: VehicleCardEditor;
+  @property({ attribute: false }) editor!: CanyoneroEditor;
   @property({ attribute: false }) configDefault: any = {};
   @state() isDefaultCard?: boolean;
   @state() configType!: string;

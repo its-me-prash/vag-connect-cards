@@ -2,7 +2,7 @@ import { LitElement, html, TemplateResult, CSSResultGroup, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
 import editorcss from '../../css/editor.css';
-import { VehicleCardEditor } from '../../editor';
+import { CanyoneroEditor } from '../../editor';
 import { ExtendedButtonConfigItem, CardTypeConfig, HomeAssistant, BaseButtonConfig } from '../../types';
 import './custom-yaml-editor';
 import {
@@ -17,7 +17,7 @@ import {
 @customElement('custom-button-template')
 export class CustomButtonTemplate extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
-  @property({ type: Object }) editor!: VehicleCardEditor;
+  @property({ type: Object }) editor!: CanyoneroEditor;
   @property({ attribute: false }) button!: ExtendedButtonConfigItem;
   @property({ attribute: false }) card!: CardTypeConfig;
   @property({ type: Boolean }) isButtonPreview: boolean = false;

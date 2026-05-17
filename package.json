@@ -1,7 +1,7 @@
 {
-  "name": "vag-connect-card",
-  "version": "0.0.1",
-  "description": "Home Assistant Lovelace card for the VAG Connect integration (Audi · VW · Škoda · SEAT · CUPRA · Porsche · VW US/CA)",
+  "name": "canyonero-vehicle-dashboard",
+  "version": "0.0.2",
+  "description": "Canyonero — universal vehicle dashboard card for Home Assistant",
   "keywords": [
     "home-assistant",
     "homeassistant",
@@ -9,21 +9,27 @@
     "automation",
     "lovelace",
     "custom-cards",
+    "canyonero",
+    "vehicle",
+    "car",
     "vag",
     "audi",
     "volkswagen",
     "skoda",
     "seat",
     "cupra",
-    "porsche"
+    "porsche",
+    "tesla",
+    "bmw",
+    "mercedes"
   ],
-  "author": "Prash Balan (@its-me-prash)",
+  "author": "Prash <116392836+its-me-prash@users.noreply.github.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/its-me-prash/vag-connect-cards"
   },
-  "main": "vag-connect-card.js",
-  "license": "Apache-2.0",
+  "main": "canyonero-vehicle-dashboard.js",
+  "license": "MIT",
   "dependencies": {
     "@mdi/js": "^7.4.47",
     "apexcharts": "^5.3.3",

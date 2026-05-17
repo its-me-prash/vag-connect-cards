@@ -8,7 +8,7 @@ import './components';
 import { classMap } from 'lit/directives/class-map.js';
 import { styleMap } from 'lit/directives/style-map.js';
 
-import { VagRemoteControl, VagButtons, VagMap } from './components/';
+import { CanyoneroRemoteControl, CanyoneroButtons, CanyoneroMap } from './components/';
 import { CardItem, cardTypes } from './const/data-keys';
 import { IMAGE } from './const/imgconst';
 import { servicesCtrl } from './const/remote-control-keys';
@@ -47,11 +47,11 @@ import { getAddedButton, getDefaultButton, createCardElement, createCustomButton
 
 const ROWPX = 58;
 
-@customElement('vag-connect-card')
-export class VagConnectCard extends LitElement implements LovelaceCard {
+@customElement('canyonero-vehicle-dashboard')
+export class Canyonero extends LitElement implements LovelaceCard {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
     await import('./editor');
-    return document.createElement('vag-connect-card-editor');
+    return document.createElement('canyonero-vehicle-dashboard-editor');
   }
   // Properties
   @property({ attribute: false })
@@ -111,13 +111,13 @@ export class VagConnectCard extends LitElement implements LovelaceCard {
   @state() _cardId?: string | null;
   private _calculateCardHeight?: number;
   // Components
-  @query('vag-buttons') vehicleButtons!: VagButtons;
-  @query('vag-map') vehicleMap!: VagMap;
-  @query('vag-remote-control') remoteControl!: VagRemoteControl;
+  @query('canyonero-buttons') vehicleButtons!: CanyoneroButtons;
+  @query('canyonero-map') vehicleMap!: CanyoneroMap;
+  @query('canyonero-remote-control') remoteControl!: CanyoneroRemoteControl;
 
   connectedCallback(): void {
     super.connectedCallback();
-    window.VagConnectCard = this;
+    window.Canyonero = this;
 
     if (this.editMode) {
       this._loading = false;
@@ -477,7 +477,11 @@ export class VagConnectCard extends LitElement implements LovelaceCard {
     })();
 
     return html`
-      <div class="vag-brand-header" brand="${brandWordmark.toLowerCase().replace(/\s/g, '_')}">
+      <div
+        class="vag-brand-header"
+        brand="${brandWordmark.toLowerCase().replace(/\s/g, '_')}"
+        @click=${this._handleBrandHeaderClick}
+      >
         <div class="brand-logo-slot">
           ${customLogo
             ? html`<img src=${customLogo} alt="Brand logo" />`
@@ -495,6 +499,59 @@ export class VagConnectCard extends LitElement implements LovelaceCard {
       </div>
     `;
   }
+
+  /**
+   * Triple-click the brand header → rotating easter-egg quote toast.
+   * Picks one quote at random from the favourite-shows trifecta. Pure
+   * cosmetic, never affects state.
+   */
+  private _brandHeaderClickCount = 0;
+  private _brandHeaderClickTimer?: ReturnType<typeof setTimeout>;
+  private _handleBrandHeaderClick = (): void => {
+    this._brandHeaderClickCount++;
+    clearTimeout(this._brandHeaderClickTimer);
+    if (this._brandHeaderClickCount >= 3) {
+      this._brandHeaderClickCount = 0;
+      const quotes = [
+        'Canyonero! Canyonero!',
+        'Legen… wait for it… DARY!',
+        'Bazinga.',
+        'Suit up.',
+        "D'oh!",
+        'Knock-knock-knock, Penny.',
+        'Have you met Ted?',
+        'Mmm… donuts.',
+        'Hi diddly-ho, neighbour!',
+        'Soft kitty, warm kitty…',
+      ];
+      const q = quotes[Math.floor(Math.random() * quotes.length)];
+      const toast = document.createElement('div');
+      toast.textContent = q;
+      Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '24px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: 'var(--primary-color, #b58450)',
+        color: 'var(--text-primary-color, #fff)',
+        padding: '10px 18px',
+        borderRadius: '24px',
+        fontWeight: '600',
+        zIndex: '99999',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+        opacity: '0',
+        transition: 'opacity 250ms ease',
+      });
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => (toast.style.opacity = '1'));
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 2200);
+      return;
+    }
+    this._brandHeaderClickTimer = setTimeout(() => (this._brandHeaderClickCount = 0), 600);
+  };
 
   private _renderInfoBox(): TemplateResult {
     const isCharging = this.isCharging;
@@ -639,7 +696,7 @@ export class VagConnectCard extends LitElement implements LovelaceCard {
 
     return html`
       <div id=${SECTION.IMAGES_SLIDER}>
-        <vag-header-slide .config=${this.config} .editMode=${this.editMode}></vag-header-slide>
+        <canyonero-header-slide .config=${this.config} .editMode=${this.editMode}></canyonero-header-slide>
       </div>
     `;
   }
@@ -657,7 +714,7 @@ export class VagConnectCard extends LitElement implements LovelaceCard {
     }
     return html`
       <div id=${SECTION.MINI_MAP}>
-        <vag-map .hass=${this._hass} .mapData=${this.MapData!} .card=${this} .isDark=${isDark}></vag-map>
+        <canyonero-map .hass=${this._hass} .mapData=${this.MapData!} .card=${this} .isDark=${isDark}></canyonero-map>
       </div>
     `;
   }
@@ -678,13 +735,13 @@ export class VagConnectCard extends LitElement implements LovelaceCard {
     const config = this.config;
     return html`
       <div id=${SECTION.BUTTONS}>
-        <vag-buttons
+        <canyonero-buttons
           .hass=${this._hass}
           .component=${this}
           ._config=${config}
           ._buttons=${buttonCards}
           ._cardCurrentSwipeIndex=${this._currentSwipeIndex}
-        ></vag-buttons>
+        ></canyonero-buttons>
       </div>
     `;
   }
@@ -894,7 +951,7 @@ export class VagConnectCard extends LitElement implements LovelaceCard {
 
     return html`
       <div class="default-card remote-tab">
-        <vag-remote-control .hass=${hass} .card=${this as any} .selectedServices=${activeServices}></vag-remote-control>
+        <canyonero-remote-control .hass=${hass} .card=${this as any} .selectedServices=${activeServices}></canyonero-remote-control>
       </div>
     `;
   }
@@ -1701,9 +1758,9 @@ export class VagConnectCard extends LitElement implements LovelaceCard {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vag-connect-card': VagConnectCard;
+    'canyonero-vehicle-dashboard': Canyonero;
   }
   interface Window {
-    VagConnectCard: VagConnectCard;
+    Canyonero: Canyonero;
   }
 }

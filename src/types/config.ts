@@ -243,8 +243,8 @@ export interface VehicleCardConfig extends LovelaceCardConfig, SHOW_OPTIONS {
 // Default configuration for the Vehicle Card.
 
 export const defaultConfig = {
-  type: 'custom:vag-connect-card',
-  name: 'VAG Connect Card',
+  type: 'custom:canyonero-vehicle-dashboard',
+  name: 'Canyonero',
   entity: '',
   model_name: '',
   selected_language: 'system',

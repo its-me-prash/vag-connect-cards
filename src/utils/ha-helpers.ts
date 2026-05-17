@@ -3,9 +3,10 @@ const HELPERS = (window as any).loadCardHelpers ? (window as any).loadCardHelper
 import { hasAction } from 'custom-card-helpers';
 import memoizeOne from 'memoize-one';
 
+import { Canyonero } from '../canyonero-vehicle-dashboard';
 import { combinedFilters, CARD_UPADE_SENSOR, CARD_VERSION, REPOSITORY, VAG_DOMAIN, VAG_SERVICES, VagBrand } from '../const/const';
 import { baseDataKeys } from '../const/data-keys';
-import { VehicleCardEditor } from '../editor';
+import { CanyoneroEditor } from '../editor';
 import {
   HomeAssistant,
   VehicleEntities,
@@ -22,7 +23,6 @@ import {
   ButtonActionConfig,
 } from '../types';
 import { LovelaceCardConfig } from '../types/ha-frontend/lovelace/lovelace';
-import { VagConnectCard } from '../vag-connect-card';
 
 // ---------------------------------------------------------------------------
 // VAG Connect device + entity discovery
@@ -103,7 +103,7 @@ const getVehicleEntities = memoizeOne(
   async (
     hass: HomeAssistant,
     config: { entity: string },
-    component: VagConnectCard
+    component: Canyonero
   ): Promise<VehicleEntities> => {
     const entityState = hass.states[config.entity];
     if (!entityState) {
@@ -117,7 +117,7 @@ const getVehicleEntities = memoizeOne(
 
     const carEntity = allEntities.find((e) => e.entity_id === config.entity);
     if (!carEntity) {
-      console.warn('[vag-connect-card] Anchor entity not found in registry:', config.entity);
+      console.warn('[canyonero] Anchor entity not found in registry:', config.entity);
       return {};
     }
 
@@ -393,7 +393,7 @@ export async function getAddedButton(
 // First-updated hooks
 // ---------------------------------------------------------------------------
 
-export async function handleFirstUpdated(editor: VehicleCardEditor): Promise<void> {
+export async function handleFirstUpdated(editor: CanyoneroEditor): Promise<void> {
   if (!editor._latestRelease.version) {
     const [latestVersion, installed] = await Promise.all([
       fetchLatestReleaseTag(),
@@ -475,7 +475,7 @@ export async function createMapPopup(hass: HomeAssistant, config: VehicleCardCon
   return await createCardElement(hass, haMapConfig);
 }
 
-export async function handleCardFirstUpdated(component: VagConnectCard): Promise<void> {
+export async function handleCardFirstUpdated(component: Canyonero): Promise<void> {
   const hass = component._hass as HomeAssistant;
   const config = component.config as VehicleCardConfig;
   component.vehicleEntities = await getVehicleEntities(hass, config, component);
@@ -498,7 +498,7 @@ export async function handleCardFirstUpdated(component: VagConnectCard): Promise
       }
     }
   } catch (e) {
-    console.warn('[vag-connect-card] Could not resolve device metadata:', e);
+    console.warn('[canyonero] Could not resolve device metadata:', e);
   }
 
   // Auto-image-slider: if the user hasn't configured any images, discover
@@ -512,7 +512,7 @@ export async function handleCardFirstUpdated(component: VagConnectCard): Promise
         (component.config as any).images = renders;
       }
     } catch (e) {
-      console.warn('[vag-connect-card] Could not auto-discover render images:', e);
+      console.warn('[canyonero] Could not auto-discover render images:', e);
     }
   }
 
@@ -532,7 +532,7 @@ export async function handleCardFirstUpdated(component: VagConnectCard): Promise
         }
       }
     } catch (e) {
-      console.warn('[vag-connect-card] Could not auto-discover device_tracker:', e);
+      console.warn('[canyonero] Could not auto-discover device_tracker:', e);
     }
   }
 
@@ -605,7 +605,7 @@ async function discoverDeviceTracker(hass: HomeAssistant, anchorEntityId: string
  * we drop the Maptiler dependency. Custom styling is left to the user
  * via the editor's Advanced view.
  */
-export async function _getSingleCard(card: VagConnectCard): Promise<LovelaceCardConfig | void> {
+export async function _getSingleCard(card: Canyonero): Promise<LovelaceCardConfig | void> {
   const config = card.config as VehicleCardConfig;
   if (!config.map_popup_config?.single_map_card || !config.device_tracker) return;
   const hass = card._hass as HomeAssistant;
@@ -636,7 +636,7 @@ export async function _getSingleCard(card: VagConnectCard): Promise<LovelaceCard
   return mapCardEl[0];
 }
 
-export async function _getMapDat(card: VagConnectCard): Promise<void> {
+export async function _getMapDat(card: Canyonero): Promise<void> {
   const config = card.config as VehicleCardConfig;
   if (!config.show_map || !config.device_tracker || card._currentPreviewType !== null) return;
 
@@ -653,7 +653,7 @@ export async function _getMapDat(card: VagConnectCard): Promise<void> {
 }
 
 export const _getMapAddress = memoizeOne(
-  async (card: VagConnectCard, lat: number, lon: number): Promise<Address | undefined> => {
+  async (card: Canyonero, lat: number, lon: number): Promise<Address | undefined> => {
     if (card.config.map_popup_config?.show_address === false) return undefined;
 
     const apiKey = card.config?.google_api_key;

@@ -8,18 +8,18 @@ import Swiper from 'swiper';
 import { Pagination } from 'swiper/modules';
 import swipercss from 'swiper/swiper-bundle.css';
 
+import { Canyonero } from '../../canyonero-vehicle-dashboard';
 // Styles
 import mainstyle from '../../css/styles.css';
+// Components
+import './canyonero-button-single';
 // Local imports
 import { ButtonCardEntity, HomeAssistant, VehicleCardConfig } from '../../types';
-// Components
-import './vag-button-single';
-import { VagConnectCard } from '../../vag-connect-card';
 
-@customElement('vag-buttons')
-export class VagButtons extends LitElement {
+@customElement('canyonero-buttons')
+export class CanyoneroButtons extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
-  @property({ attribute: false }) public component!: VagConnectCard;
+  @property({ attribute: false }) public component!: Canyonero;
   @property({ attribute: false }) _config!: VehicleCardConfig;
   @property({ attribute: false }) _buttons!: ButtonCardEntity;
 
@@ -105,7 +105,7 @@ export class VagButtons extends LitElement {
     if (!this.shadowRoot) return;
 
     const runAnimation = () => {
-      const gridItems = this.shadowRoot?.querySelectorAll('vag-button-single') as NodeListOf<HTMLElement>;
+      const gridItems = this.shadowRoot?.querySelectorAll('canyonero-button-single') as NodeListOf<HTMLElement>;
       if (!gridItems || gridItems.length === 0) return;
 
       gridItems.forEach((grid, index) => {
@@ -130,7 +130,7 @@ export class VagButtons extends LitElement {
     };
 
     const observer = new MutationObserver(() => {
-      const buttons = this.shadowRoot?.querySelectorAll('vag-button-single') as NodeListOf<HTMLElement>;
+      const buttons = this.shadowRoot?.querySelectorAll('canyonero-button-single') as NodeListOf<HTMLElement>;
       if (buttons && buttons.length > 0) {
         requestAnimationFrame(() => runAnimation());
       }
@@ -246,14 +246,14 @@ export class VagButtons extends LitElement {
 
   private _renderButton(key: string): TemplateResult {
     const button = this._buttons[key];
-    return html` <vag-button-single
+    return html` <canyonero-button-single
       data-key="${`button-${key}`}"
       .hass=${this.hass}
       ._config=${this._config}
       ._card=${this}
       ._button=${button}
       .layout=${this.buttonConfig.button_layout}
-    ></vag-button-single>`;
+    ></canyonero-button-single>`;
   }
 
   private _chunkObject = (obj: ButtonCardEntity, size: number): ButtonCardEntity => {
@@ -288,7 +288,7 @@ export class VagButtons extends LitElement {
 
   public showCustomBtnEditor = (key: string): void => {
     const btnId = `button-${key}`;
-    const gridBtns = this.shadowRoot?.querySelectorAll('vag-button-single') as NodeListOf<HTMLElement>;
+    const gridBtns = this.shadowRoot?.querySelectorAll('canyonero-button-single') as NodeListOf<HTMLElement>;
     const btnElt = Array.from(gridBtns).find((btn) => btn.getAttribute('data-key') === btnId) as HTMLElement;
 
     if (!btnElt) return;
@@ -347,6 +347,6 @@ export class VagButtons extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vag-buttons': VagButtons;
+    'canyonero-buttons': CanyoneroButtons;
   }
 }

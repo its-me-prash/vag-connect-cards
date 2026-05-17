@@ -30,10 +30,10 @@ const plugins = [dev && serve(serveopts), !dev && terser(terserOpt), !dev && fil
 
 export default [
   {
-    input: 'src/vag-connect-card.ts',
+    input: 'src/canyonero-vehicle-dashboard.ts',
     output: [
       {
-        file: dev ? 'dist/vag-connect-card.js' : 'build/vag-connect-card.js',
+        file: dev ? 'dist/canyonero-vehicle-dashboard.js' : 'build/canyonero-vehicle-dashboard.js',
         format: 'es',
         sourcemap: dev ? true : false,
         inlineDynamicImports: true,

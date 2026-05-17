@@ -55,8 +55,8 @@ const latestRelease: { version: string; hacs: boolean; updated: boolean } = {
   updated: false,
 };
 
-@customElement('vag-connect-card-editor')
-export class VehicleCardEditor extends LitElement implements LovelaceCardEditor {
+@customElement('canyonero-vehicle-dashboard-editor')
+export class CanyoneroEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public lovelace?: LovelaceConfig;
   @property({ attribute: false }) _config!: VehicleCardConfig;
@@ -95,15 +95,15 @@ export class VehicleCardEditor extends LitElement implements LovelaceCardEditor 
 
   connectedCallback() {
     super.connectedCallback();
-    console.log('VehicleCardEditor connected');
+    console.log('CanyoneroEditor connected');
     void loadHaComponents();
     void stickyPreview();
-    window.VagConnectCardEditor = this;
+    window.CanyoneroEditor = this;
     this._cleanConfig();
   }
 
   disconnectedCallback(): void {
-    console.log('VehicleCardEditor disconnected');
+    console.log('CanyoneroEditor disconnected');
     super.disconnectedCallback();
   }
 
@@ -1689,19 +1689,19 @@ export class VehicleCardEditor extends LitElement implements LovelaceCardEditor 
 
 (window as any).customCards = (window as any).customCards || [];
 (window as any).customCards.push({
-  type: 'vag-connect-card',
-  name: 'VAG Connect Card',
+  type: 'canyonero-vehicle-dashboard',
+  name: 'Canyonero',
   preview: true,
-  description: 'Lovelace card for the VAG Connect integration — Audi, VW, Škoda, SEAT, CUPRA, Porsche, VW US/CA.',
+  description: 'Universal vehicle dashboard card for Home Assistant — works with VAG Connect, Mercedes mbapi2020, Tesla and more.',
   documentationURL: 'https://github.com/its-me-prash/vag-connect-cards#configuration',
 });
 
 declare global {
   interface Window {
-    VagConnectCardEditor: VehicleCardEditor;
+    CanyoneroEditor: CanyoneroEditor;
   }
 
   interface HTMLElementTagNameMap {
-    'vag-connect-card-editor': LovelaceCardEditor;
+    'canyonero-vehicle-dashboard-editor': LovelaceCardEditor;
   }
 }

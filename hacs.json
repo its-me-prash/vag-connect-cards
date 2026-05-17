@@ -1,7 +1,7 @@
 {
-  "name": "VAG Connect Card",
+  "name": "Canyonero",
   "render_readme": true,
-  "filename": "vag-connect-card.js",
+  "filename": "canyonero-vehicle-dashboard.js",
   "content_in_root": false,
   "homeassistant": "2024.4.0"
 }

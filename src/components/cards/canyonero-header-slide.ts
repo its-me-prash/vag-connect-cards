@@ -8,8 +8,8 @@ import { SwiperOptions } from 'swiper/types';
 
 import { VehicleCardConfig } from '../../types';
 
-@customElement('vag-header-slide')
-export class VagHeaderSlide extends LitElement {
+@customElement('canyonero-header-slide')
+export class CanyoneroHeaderSlide extends LitElement {
   @state() private config!: VehicleCardConfig;
   @state() private editMode!: boolean;
   @state() private images: { url: string; title: string }[] = [];

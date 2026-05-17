@@ -5,7 +5,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import Sortable from 'sortablejs';
 
 import editorcss from '../../css/editor.css';
-import { VehicleCardEditor } from '../../editor';
+import { CanyoneroEditor } from '../../editor';
 import { ImageConfig, VehicleCardConfig } from '../../types';
 import { fireEvent } from '../../types/ha-frontend/fire-event';
 import { imageInputChange, handleFilePicked } from '../../utils';
@@ -13,7 +13,7 @@ import { Picker } from '../../utils/create';
 
 @customElement('panel-images')
 export class PanelImages extends LitElement {
-  @property({ attribute: false }) editor!: VehicleCardEditor;
+  @property({ attribute: false }) editor!: CanyoneroEditor;
   @property({ type: Object }) config!: VehicleCardConfig;
   @property({ type: Array }) _images!: ImageConfig[];
   @state() _selectedItems: Set<string> = new Set();

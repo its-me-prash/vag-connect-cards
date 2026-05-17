@@ -1,4 +1,4 @@
-import { VehicleCardEditor } from '../editor';
+import { CanyoneroEditor } from '../editor';
 import { HomeAssistant } from '../types';
 /**
  * Upload a file to the server
@@ -35,7 +35,7 @@ export async function uploadImage(hass: HomeAssistant, file: File): Promise<stri
   return `/api/image/serve/${imageId}/original`;
 }
 
-export function imageInputChange(editor: VehicleCardEditor, ev: Event, index?: number): void {
+export function imageInputChange(editor: CanyoneroEditor, ev: Event, index?: number): void {
   ev.stopPropagation();
   const input = ev.target as HTMLInputElement;
   const url = input.value;
@@ -59,7 +59,7 @@ export function imageInputChange(editor: VehicleCardEditor, ev: Event, index?: n
 }
 
 export async function handleFilePicked(
-  editor: VehicleCardEditor,
+  editor: CanyoneroEditor,
   target: { files: FileList; toastId: string; errorMsg?: string }
 ): Promise<void> {
   console.log('File picked');
@@ -84,7 +84,7 @@ export async function handleFilePicked(
   }
 }
 
-function _addImage(editor: VehicleCardEditor, url: string, title: string): void {
+function _addImage(editor: CanyoneroEditor, url: string, title: string): void {
   console.log('Image added:', url);
   if (editor._config) {
     const images = [...(editor._config.images || [])];

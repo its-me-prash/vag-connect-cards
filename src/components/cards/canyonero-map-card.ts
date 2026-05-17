@@ -18,6 +18,7 @@ const DEFAULT_DIALOG_STYLES = html`<style>
     --mdc-dialog-max-height: 100vh;
   }
 </style>`;
+import { Canyonero } from '../../canyonero-vehicle-dashboard';
 import {
   HistoryStates,
   isComponentLoaded,
@@ -31,7 +32,6 @@ import {
 import { LovelaceCardConfig } from '../../types/ha-frontend/lovelace/lovelace';
 import { _getMapAddress, createMapPopup } from '../../utils';
 import { createCloseHeading } from '../../utils/create';
-import { VagConnectCard } from '../../vag-connect-card';
 
 export interface MapConfig extends MapPopupConfig {
   device_tracker: string;
@@ -39,11 +39,11 @@ export interface MapConfig extends MapPopupConfig {
   maptiler_api_key?: string;
 }
 
-@customElement('vag-map')
-export class VagMap extends LitElement {
+@customElement('canyonero-map')
+export class CanyoneroMap extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) mapData!: MapData;
-  @property({ attribute: false }) card!: VagConnectCard;
+  @property({ attribute: false }) card!: Canyonero;
   @property({ type: Boolean }) isDark!: boolean;
   @property({ type: Boolean }) open!: boolean;
 
@@ -552,6 +552,6 @@ export class VagMap extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vag-map': VagMap;
+    'canyonero-map': CanyoneroMap;
   }
 }

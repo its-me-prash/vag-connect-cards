@@ -10,7 +10,7 @@ import mainstyle from '../../css/styles.css';
 import { ButtonCardEntity, HomeAssistant, VehicleCardConfig, BUTTON_LAYOUT } from '../../types';
 import { RenderTemplateResult, subscribeRenderTemplate } from '../../types/ha-frontend/data/ws-templates';
 import { addActions, hasActions, hasTemplate } from '../../utils';
-import { VagButtons } from './vag-vehicle-buttons';
+import { CanyoneroButtons } from './canyonero-vehicle-buttons';
 
 const TEMPLATE_KEYS = [
   'secondary',
@@ -25,11 +25,11 @@ type TemplateKey = (typeof TEMPLATE_KEYS)[number];
 
 const COLOR_AlPHA = '.2';
 
-@customElement('vag-button-single')
-export class VagButtonSingle extends LitElement {
+@customElement('canyonero-button-single')
+export class CanyoneroButtonSingle extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) _config!: VehicleCardConfig;
-  @property({ attribute: false }) _card!: VagButtons;
+  @property({ attribute: false }) _card!: CanyoneroButtons;
   @property({ attribute: false }) _button!: ButtonCardEntity;
   @property({ attribute: 'layout', type: String }) layout?: BUTTON_LAYOUT;
 
@@ -610,6 +610,6 @@ export class VagButtonSingle extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vag-button-single': VagButtonSingle;
+    'canyonero-button-single': CanyoneroButtonSingle;
   }
 }

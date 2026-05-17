@@ -6,7 +6,7 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import 'nvn-tabs';
 
 import styles from '../../css/editor.css';
-import { VehicleCardEditor } from '../../editor';
+import { CanyoneroEditor } from '../../editor';
 // Local types
 import { HomeAssistant, VehicleCardConfig, CardTypeConfig } from '../../types';
 import { fireEvent, HASSDomEvent } from '../../types/ha-frontend/fire-event';
@@ -21,7 +21,7 @@ export interface GUIModeChangedEvent {
 export class CustomCardUIEditor extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public lovelace?: LovelaceConfig;
-  @property({ type: Object }) editor!: VehicleCardEditor;
+  @property({ type: Object }) editor!: CanyoneroEditor;
   @property({ type: Object }) _config!: VehicleCardConfig;
   @property({ type: Object }) cardType!: CardTypeConfig;
   @property({ type: Boolean }) isCardPreview: boolean = false;
