@@ -642,6 +642,7 @@ dialog::backdrop {
   font-family: inherit;
 }
 
+/* VAG group */
 .vag-brand-header[brand="audi"] .brand-wordmark   { letter-spacing: 4px; }
 .vag-brand-header[brand="vw"] .brand-wordmark,
 .vag-brand-header[brand="vw_us"] .brand-wordmark  { letter-spacing: 1.5px; }
@@ -650,6 +651,22 @@ dialog::backdrop {
 .vag-brand-header[brand="skoda"] .brand-wordmark   { font-style: italic; letter-spacing: 2px; }
 .vag-brand-header[brand="cupra"] .brand-wordmark   { color: var(--accent-color, #b58450); letter-spacing: 2.5px; }
 .vag-brand-header[brand="seat"] .brand-wordmark    { letter-spacing: 2.5px; }
+
+/* Non-VAG majors — keep neutral tracking; subtle differentiation only.
+ * Real licensed logos are out of scope; users can drop their own via
+ * config.brand_logo_url. */
+.vag-brand-header[brand="tesla"] .brand-wordmark   { letter-spacing: 3px; }
+.vag-brand-header[brand="bmw"] .brand-wordmark     { letter-spacing: 2px; }
+.vag-brand-header[brand="mercedes"] .brand-wordmark { letter-spacing: 1.5px; font-style: italic; }
+.vag-brand-header[brand="toyota"] .brand-wordmark  { letter-spacing: 2px; }
+.vag-brand-header[brand="volvo"] .brand-wordmark   { letter-spacing: 3px; }
+.vag-brand-header[brand="ford"] .brand-wordmark    { letter-spacing: 1.5px; }
+.vag-brand-header[brand="hyundai"] .brand-wordmark { letter-spacing: 2px; }
+.vag-brand-header[brand="kia"] .brand-wordmark     { letter-spacing: 3px; }
+.vag-brand-header[brand="nissan"] .brand-wordmark  { letter-spacing: 2px; }
+.vag-brand-header[brand="mazda"] .brand-wordmark   { letter-spacing: 2px; }
+.vag-brand-header[brand="honda"] .brand-wordmark   { letter-spacing: 1.5px; }
+.vag-brand-header[brand="subaru"] .brand-wordmark  { letter-spacing: 2px; }
 
 .vag-brand-header .brand-meta {
   display: flex;

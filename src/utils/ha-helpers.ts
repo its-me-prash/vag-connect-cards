@@ -4,7 +4,15 @@ import { hasAction } from 'custom-card-helpers';
 import memoizeOne from 'memoize-one';
 
 import { Canyonero } from '../canyonero-vehicle-dashboard';
-import { combinedFilters, CARD_UPADE_SENSOR, CARD_VERSION, REPOSITORY, VAG_DOMAIN, VAG_SERVICES, VagBrand } from '../const/const';
+import {
+  CARD_UPADE_SENSOR,
+  CARD_VERSION,
+  REPOSITORY,
+  DEFAULT_INTEGRATION,
+  getPreset,
+  KnownBrand,
+  KNOWN_BRANDS,
+} from '../const/const';
 import { baseDataKeys } from '../const/data-keys';
 import { CanyoneroEditor } from '../editor';
 import {
@@ -25,62 +33,91 @@ import {
 import { LovelaceCardConfig } from '../types/ha-frontend/lovelace/lovelace';
 
 // ---------------------------------------------------------------------------
-// VAG Connect device + entity discovery
+// Multi-integration device + entity discovery
 // ---------------------------------------------------------------------------
 
-export interface VagConnectDevice {
+export interface SupportedDevice {
   id: string;
   name: string;
   model: string;
   manufacturer: string;
-  brand: VagBrand | undefined;
+  brand: KnownBrand | undefined;
   /** Last 17 chars of unique_id that look VIN-like — best-effort. */
   vin?: string;
+  /** Integration key the device was discovered under. */
+  integration: string;
 }
 
 /**
- * Returns the list of HA devices that belong to the `vag_connect` integration.
- * Used by the editor's setup-wizard to populate a "pick your car" dropdown.
+ * Returns the list of HA devices that belong to the given integration.
+ * Used by the editor's setup wizard to populate a "pick your car"
+ * dropdown. When `integrationKey` is omitted, scans across every known
+ * integration preset.
  */
-export async function listVagConnectDevices(hass: HomeAssistant): Promise<VagConnectDevice[]> {
+export async function listSupportedDevices(
+  hass: HomeAssistant,
+  integrationKey?: string
+): Promise<SupportedDevice[]> {
   const [devices, entries] = await Promise.all([
-    hass.callWS<{ id: string; name: string | null; name_by_user: string | null; model: string | null; manufacturer: string | null; config_entries: string[]; identifiers: [string, string][] }[]>({
-      type: 'config/device_registry/list',
-    }),
-    hass.callWS<{ entry_id: string; domain: string }[]>({
-      type: 'config_entries/get',
-    }),
+    hass.callWS<
+      {
+        id: string;
+        name: string | null;
+        name_by_user: string | null;
+        model: string | null;
+        manufacturer: string | null;
+        config_entries: string[];
+        identifiers: [string, string][];
+      }[]
+    >({ type: 'config/device_registry/list' }),
+    hass.callWS<{ entry_id: string; domain: string }[]>({ type: 'config_entries/get' }),
   ]);
 
-  const vagEntryIds = new Set(entries.filter((e) => e.domain === VAG_DOMAIN).map((e) => e.entry_id));
+  // domain → integration-key mapping (only those that match a preset)
+  const domainToKey = new Map<string, string>();
+  for (const [key, preset] of Object.entries((await import('../const/const')).INTEGRATION_PRESETS)) {
+    if (preset.domain) domainToKey.set(preset.domain, key);
+  }
+  const filterDomain = integrationKey ? getPreset(integrationKey).domain : null;
+
+  const matchingEntryIds = new Map<string, string>(); // entry_id → integration key
+  for (const entry of entries) {
+    const key = domainToKey.get(entry.domain);
+    if (!key) continue;
+    if (filterDomain && entry.domain !== filterDomain) continue;
+    matchingEntryIds.set(entry.entry_id, key);
+  }
 
   return devices
-    .filter((d) => d.config_entries.some((id) => vagEntryIds.has(id)))
+    .filter((d) => d.config_entries.some((id) => matchingEntryIds.has(id)))
     .map((d) => {
-      // VAG Connect stores the VIN as the second member of identifiers
-      // (("vag_connect", VIN)). Falls back to undefined if absent.
-      const ident = d.identifiers.find(([dom]) => dom === VAG_DOMAIN);
-      const vin = ident ? ident[1] : undefined;
-      const manufacturer = (d.manufacturer || '').toLowerCase();
-      const brand = resolveVagBrand(manufacturer);
+      const matchedEntry = d.config_entries.find((id) => matchingEntryIds.has(id))!;
+      const integration = matchingEntryIds.get(matchedEntry)!;
+      const preset = getPreset(integration);
+      const ident = preset.domain ? d.identifiers.find(([dom]) => dom === preset.domain) : undefined;
       return {
         id: d.id,
         name: d.name_by_user || d.name || '',
         model: d.model || '',
         manufacturer: d.manufacturer || '',
-        brand,
-        vin,
+        brand: resolveBrand(d.manufacturer || ''),
+        vin: ident ? ident[1] : undefined,
+        integration,
       };
     });
 }
 
+/** Legacy alias — old code paths still import this name. */
+export const listVagConnectDevices = listSupportedDevices;
+
 /**
- * Map a free-text manufacturer string to one of the supported VAG brand
- * identifiers. Returns undefined if no match — caller renders a generic
- * fallback logo.
+ * Map a free-text manufacturer string to one of the known brand
+ * identifiers. Returns undefined if no match — caller falls back to
+ * rendering the literal manufacturer string.
  */
-export function resolveVagBrand(manufacturer: string): VagBrand | undefined {
+export function resolveBrand(manufacturer: string): KnownBrand | undefined {
   const m = manufacturer.toLowerCase().trim();
+  // VAG group
   if (m.includes('audi')) return 'audi';
   if (m.includes('škoda') || m.includes('skoda')) return 'skoda';
   if (m.includes('cupra')) return 'cupra';
@@ -89,8 +126,26 @@ export function resolveVagBrand(manufacturer: string): VagBrand | undefined {
   if (m.includes('volkswagen')) {
     return m.includes('us') || m.includes('na') ? 'volkswagen_na' : 'volkswagen';
   }
+  // Other major makes
+  if (m.includes('tesla')) return 'tesla';
+  if (m.includes('bmw')) return 'bmw';
+  if (m.includes('mercedes') || m.includes('benz')) return 'mercedes';
+  if (m.includes('toyota')) return 'toyota';
+  if (m.includes('volvo')) return 'volvo';
+  if (m.includes('ford')) return 'ford';
+  if (m.includes('hyundai')) return 'hyundai';
+  if (m.includes('kia')) return 'kia';
+  if (m.includes('nissan')) return 'nissan';
+  if (m.includes('mazda')) return 'mazda';
+  if (m.includes('honda')) return 'honda';
+  if (m.includes('subaru')) return 'subaru';
+  // Bonus: any literal match against the known-brands list
+  if ((KNOWN_BRANDS as readonly string[]).includes(m)) return m as KnownBrand;
   return undefined;
 }
+
+/** Legacy alias — old code paths still import this name. */
+export const resolveVagBrand = resolveBrand;
 
 // ---------------------------------------------------------------------------
 // Entity resolution — given a `config.entity` anchor (any VAG Connect
@@ -102,7 +157,7 @@ export function resolveVagBrand(manufacturer: string): VagBrand | undefined {
 const getVehicleEntities = memoizeOne(
   async (
     hass: HomeAssistant,
-    config: { entity: string },
+    config: { entity: string; integration?: string },
     component: Canyonero
   ): Promise<VehicleEntities> => {
     const entityState = hass.states[config.entity];
@@ -127,10 +182,11 @@ const getVehicleEntities = memoizeOne(
         (e) => hass.states[e.entity_id] && !['unavailable', 'unknown'].includes(hass.states[e.entity_id].state)
       );
 
+    const preset = getPreset(config.integration || DEFAULT_INTEGRATION);
     const entityIds: VehicleEntities = {};
 
-    for (const entityName of Object.keys(combinedFilters)) {
-      const { prefix, suffix } = combinedFilters[entityName];
+    for (const entityName of Object.keys(preset.filters)) {
+      const { prefix, suffix } = preset.filters[entityName];
 
       const entity = deviceEntities.find((e) => {
         if (prefix) {
@@ -157,7 +213,7 @@ const getVehicleEntities = memoizeOne(
 export async function getDeviceMeta(
   hass: HomeAssistant,
   entityId: string
-): Promise<{ name: string; model: string; manufacturer: string; brand: VagBrand | undefined } | null> {
+): Promise<{ name: string; model: string; manufacturer: string; brand: KnownBrand | undefined } | null> {
   const allEntities = await hass.callWS<{ entity_id: string; device_id: string }[]>({
     type: 'config/entity_registry/list',
   });
@@ -176,7 +232,7 @@ export async function getDeviceMeta(
     name: device.name_by_user || device.name || '',
     model: device.model || '',
     manufacturer: device.manufacturer || '',
-    brand: resolveVagBrand(device.manufacturer || ''),
+    brand: resolveBrand(device.manufacturer || ''),
   };
 }
 
@@ -195,23 +251,42 @@ export function getCarEntity(hass: HomeAssistant): string {
 }
 
 // ---------------------------------------------------------------------------
-// VAG service invocation
+// Integration-aware service invocation
 // ---------------------------------------------------------------------------
 
 /**
- * Call a `vag_connect.*` service against a vehicle. `target` is one of
- * the vehicle's entity_ids — typically the anchor (config.entity) — which
- * HA resolves to the corresponding device + VIN server-side. Returns the
- * call promise so callers can chain optimistic UI updates or toasts.
+ * Call a service against a vehicle for any supported integration.
+ * `target` is one of the vehicle's entity_ids (typically the anchor);
+ * HA resolves it to the right device + VIN server-side. Returns the
+ * `callService` promise so callers can chain optimistic UI updates
+ * or toasts. Returns a rejected promise when the chosen integration
+ * has no mapping for the requested semantic action.
  */
-export function callVagService(
+export function callIntegrationService(
   hass: HomeAssistant,
-  serviceKey: keyof typeof VAG_SERVICES,
+  integration: string,
+  serviceKey: string,
   target: string,
   data: Record<string, unknown> = {}
 ): Promise<unknown> {
-  const service = VAG_SERVICES[serviceKey];
-  return hass.callService(VAG_DOMAIN, service, { entity_id: target, ...data });
+  const preset = getPreset(integration);
+  const service = preset.services[serviceKey];
+  if (!preset.domain || !service) {
+    return Promise.reject(
+      new Error(`[canyonero] Integration '${integration}' does not expose '${serviceKey}'`)
+    );
+  }
+  return hass.callService(preset.domain, service, { entity_id: target, ...data });
+}
+
+/** Legacy alias — old code paths still import this name. */
+export function callVagService(
+  hass: HomeAssistant,
+  serviceKey: string,
+  target: string,
+  data: Record<string, unknown> = {}
+): Promise<unknown> {
+  return callIntegrationService(hass, DEFAULT_INTEGRATION, serviceKey, target, data);
 }
 
 // ---------------------------------------------------------------------------

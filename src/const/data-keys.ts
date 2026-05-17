@@ -162,13 +162,4 @@ export const baseDataKeys = (lang: string) => ({
   chargingOverview: chargingOverview(lang),
   chargingDetails: chargingDetails(lang),
   climateOverview: climateOverview(lang),
-  // legacy slot names kept as empty arrays so any straggling code that
-  // still iterates them does not crash; remove once vehicle-info-card.ts
-  // (Phase C-2) has been migrated to the new names above.
-  tripFromReset: [],
-  tripFromStart: [],
-  ecoScores: [],
-  tyrePressures: [],
-  precondSeats: [],
-  precondTemps: [],
 });

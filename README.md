@@ -1,75 +1,95 @@
-<h1 align="center">🚙 Canyonero</h1>
+<div align="center">
 
-<p align="center">
-  <strong>Universal vehicle dashboard card for Home Assistant</strong><br>
-  <em>VAG Connect · Mercedes mbapi2020 · Tesla · BMW · works with most car integrations</em>
-</p>
+# 🚙 Canyonero Vehicle Dashboard
+### The ultimate Home Assistant Lovelace dashboard for your road-going beast
 
-<p align="center">
-  <a href="https://hacs.xyz"><img src="https://img.shields.io/badge/HACS-Custom-orange.svg" alt="HACS"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-  <a href="https://github.com/its-me-prash/vag-connect-cards/releases"><img src="https://img.shields.io/github/v/release/its-me-prash/vag-connect-cards" alt="Version"></a>
-</p>
+[![GitHub Release](https://img.shields.io/github/v/release/its-me-prash/vag-connect-cards?style=for-the-badge&color=orange)](https://github.com/its-me-prash/vag-connect-cards/releases)
+[![HACS Badge](https://img.shields.io/badge/HACS-Custom-blue?style=for-the-badge)](https://github.com/hacs/integration)
+[![Home Assistant](https://img.shields.io/badge/Home__Assistant-Dashboard-darkblue?style=for-the-badge&logo=home-assistant)](https://www.home-assistant.io)
+[![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 
----
+<img src="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80" alt="Canyonero Banner" width="100%" style="border-radius: 10px; max-height: 300px; object-fit: cover;">
 
-## Was es ist
-
-Eine Lovelace-Karte, die dein Auto schön darstellt — egal ob VW, Audi, Škoda, SEAT, CUPRA, Porsche, Mercedes, Tesla oder eine andere Marke. Sie spricht direkt mit der Integration, die dein Auto in Home Assistant verbunden hat, und rendert die Daten als:
-
-- **Brand-Header** mit Marken-Wordmark, Modell, VIN-Last-6 und Online-Indikator
-- **Image-Slider** mit deinen Fahrzeug-Renders (auto-discovery)
-- **Range-Bar** mit Tank- und SoC-Anzeige
-- **Mini-Map** mit GPS-Position (auto-discovery vom Device-Tracker)
-- **4 Slide-Cards**:
-  - **Trip & Range** — Kilometerstand, Reichweiten, Tank, SoC, letzte Fahrt
-  - **Vehicle Status** — Türen, Fenster, Ladekabel, Licht, Online, Warnungen
-  - **Service & Diagnose** — Service-Tage, Ölservice, 12-V, OTA, Software, API-Quota
-  - **Akku & Laden** — SoC-Donut mit Charging-Pulse-Animation, Lade-Stats
-- **Action-Buttons** für Lock / Unlock / Climate / Charging / Honk-Flash / Wake / Refresh
-- **Read-only-Modus** respektiert die `read_only_mode`-Option deiner Integration
+*"Can you name the truck with four-wheel drive, smells like a steak and seats thirty-five? Canyonero!"*
 
 ---
 
-## Voraussetzungen
+**[Features](#-features)** · **[Installation](#-installation)** · **[Configuration](#-configuration)** · **[Easter Eggs](#-easter-eggs)** · **[Roadmap](#-roadmap)**
 
-- Home Assistant ≥ 2024.4
-- Eine der unterstützten Car-Integrationen mit mindestens einem Fahrzeug:
-  - [VAG Connect](https://github.com/its-me-prash/vag-connect-ha) (VW / Audi / Škoda / SEAT / CUPRA / Porsche / VW US/CA) — bestmöglicher Support
-  - Mercedes mbapi2020 — funktioniert mit angepasster `entity:` Konfiguration
-  - Tesla, BMW, andere Marken — funktioniert in der Regel out-of-the-box wenn die Integration `sensor.<auto>_*` Entitäten exponiert
+</div>
 
 ---
 
-## Installation (HACS)
+## ✨ Features
 
-1. HACS → **Frontend** → ⋮ → **Custom repositories**
-2. URL: `https://github.com/its-me-prash/vag-connect-cards`
-3. Kategorie: **Dashboard**
-4. **Canyonero** installieren
-5. HA hart refreshen (`Strg+Shift+R`)
+A single Lovelace card that turns any HA-connected vehicle into a beautiful dashboard.
+
+- **Brand-aware header** — wordmark, model, VIN suffix, online indicator
+- **Auto-discovery** — point `entity:` at one sensor of your car, the card resolves the device, all entities, render images, and `device_tracker` from the registry
+- **Image slider** — picks up `image.<vehicle>_render_*` entities automatically (5 best renders, sorted by quality)
+- **Mini-map + popup** — leaflet-based, GPS from `device_tracker.<vehicle>_position`, optional address resolution via OpenStreetMap or Google Geocoding
+- **4 slide-cards**:
+  - 🛣️ **Trip & Range** — odometer, electric / combustion / total range, fuel, SoC, last-trip stats
+  - 🚘 **Vehicle Status** — doors / windows / plug / lights / warnings with per-position sub-cards
+  - 🔧 **Service & Diagnostics** — service-due days, oil service, 12 V voltage, OTA, software version, API quota
+  - 🔋 **Battery & Charging** — animated SoC donut with charging pulse, charging power / rate / type / ETA
+- **Action buttons** — Lock · Unlock · Climate · Charging · Honk-Flash · Wake · Refresh — wired directly to your integration's services
+- **Read-only mode aware** — buttons disable themselves when your integration runs in `read_only_mode`
+- **HA theme native** — fonts and colours inherit from your theme, no hard-coded brand styling
+- **i18n** — German · English · French
 
 ---
 
-## Minimum-Konfiguration
+## 🔌 Supported Integrations
+
+| Integration | Status | Notes |
+|---|---|---|
+| [VAG Connect](https://github.com/its-me-prash/vag-connect-ha) (VW · Audi · Škoda · SEAT · CUPRA · Porsche · VW US/CA) | ✅ Native | Best-supported integration |
+| Mercedes-Benz `mbapi2020` | 🟡 Works | Pick any `sensor.*` of your car; renames the action buttons match Mercedes services |
+| Tesla, BMW Connected Drive, etc. | 🟡 Generic | Works as long as the integration exposes `sensor.<car>_*` entities and a `device_tracker` |
+
+Multi-brand support gets first-class treatment in `v0.0.3` via the `integration:` config key.
+
+---
+
+## 📦 Installation
+
+### HACS (recommended)
+
+1. Open **HACS** → **Frontend** → ⋮ → **Custom repositories**
+2. Add `https://github.com/its-me-prash/vag-connect-cards` · category **Dashboard**
+3. Install **Canyonero**
+4. Hard-refresh the HA tab (`Ctrl+Shift+R`)
+
+### Manual
+
+1. Grab `canyonero-vehicle-dashboard.js` from the [latest release](https://github.com/its-me-prash/vag-connect-cards/releases/latest)
+2. Drop it into `/config/www/canyonero-vehicle-dashboard.js`
+3. **Settings → Dashboards → ⋮ → Resources → Add resource**:
+   - URL: `/local/canyonero-vehicle-dashboard.js`
+   - Type: **JavaScript Module**
+
+---
+
+## ⚙️ Configuration
+
+### Minimum
 
 ```yaml
 type: custom:canyonero-vehicle-dashboard
-entity: sensor.<dein_auto>_battery_soc
+entity: sensor.<your_car>_battery_soc
 ```
 
-Wähle irgendeinen Sensor deines Autos — die Karte resolved daraus das Device + alle weiteren Entitäten + Bilder + GPS-Tracker automatisch aus dem Device-Registry.
+That's it — every other entity (doors, windows, charging, images, GPS) is auto-discovered from the same device.
 
----
-
-## Voll-Konfiguration
+### Full example
 
 ```yaml
 type: custom:canyonero-vehicle-dashboard
 entity: sensor.audi_a4_b9_battery_soc
 device_tracker: device_tracker.audi_a4_b9_position
 model_name: Audi A4 B9 Avant
-brand_logo_url: /local/my-audi-logo.svg    # optional, custom Logo
+brand_logo_url: /local/my-audi-logo.svg    # optional custom logo
 show_slides: true
 show_buttons: true
 show_map: true
@@ -86,55 +106,78 @@ services:
   doorsLock: true
   charge: true
   preheat: true
-selected_language: de
+selected_language: en
 ```
 
-Alle Optionen sind auch über den **visuellen Editor** verfügbar.
+All of these are also reachable via the **visual editor** in the Lovelace card picker.
 
 ---
 
-## Branding
+## 🎨 Branding
 
-Die Karte rendert die Marke standardmäßig als **Text-Wordmark** (AUDI · VW · ŠKODA · SEAT · CUPRA · PORSCHE · VW US · VAG). Bewusst keine Original-Hersteller-Logos out-of-the-box (Markenrechte). Wenn du dein eigenes Logo zeigen willst:
+The card ships with **text wordmarks** for known brands (AUDI · VW · ŠKODA · SEAT · CUPRA · PORSCHE · VW US · VAG). No manufacturer logos are bundled out-of-the-box — trademark / licensing reasons.
+
+Want your own logo? Drop it into `/config/www/` and reference it:
 
 ```yaml
 brand_logo_url: /local/logos/audi-rings.svg
 ```
 
+The slot accepts any image format the browser can render. Theme it via standard HA card styling.
+
 ---
 
-## Sprachen
+## 🌍 Languages
 
-- 🇩🇪 Deutsch (`de`)
+- 🇩🇪 German (`de`)
 - 🇬🇧 English (`en`)
-- 🇫🇷 Français (`fr`)
+- 🇫🇷 French (`fr`)
 
-Auto-Detection über `selected_language: system` (Default) oder explizit via `selected_language: de`.
-
----
-
-## Easter Eggs
-
-Öffne F12 → Console und tippe `canyonero.about()`. Wirf einen Blick aufs Brand-Header — Triple-Click rotiert. Mehr findest du selbst.
+Auto-detected via `selected_language: system` (default) or pinned via `selected_language: de`.
 
 ---
 
-## Roadmap
+## 🥚 Easter Eggs
 
-- 🪄 Setup-Wizard im Editor (Device-Dropdown + Sektionen-Tickboxen)
-- 🚗 Multi-Integration-Support per Config-Key `integration:`
-- 🎨 Mehr Brand-Wordmarks (Tesla, BMW, Mercedes, Toyota, Volvo, Ford, Hyundai, Kia)
+A handful of subtle nods to the favourite-shows trifecta this card is named after — Simpsons (the Canyonero!), How I Met Your Mother, Big Bang Theory.
+
+**Browser console** (F12 → Console tab):
+
+```js
+canyonero.about()       // info banner
+canyonero.bazinga()     // BBT
+canyonero.legendary()   // HIMYM — "Legen… wait for it… DARY!"
+canyonero.canyonero()   // The full Hank Williams Jr. jingle
+canyonero.dOh()         // self-explanatory
+```
+
+**Triple-click the brand header** → a rotating quote toast (10 quotes, randomised, auto-dismisses).
+
+Every release also prints one rotating quote in the console banner. Get all five.
 
 ---
 
-## Warum heißt es Canyonero?
+## 🛣️ Roadmap
 
-[Die SUV-Werbung aus den Simpsons](https://simpsons.fandom.com/wiki/Canyonero) (S9E15). Plus: subtile Refs zu *How I Met Your Mother* und *Big Bang Theory* sind im Code versteckt. Suit up.
+| Version | Theme |
+|---|---|
+| **v0.0.2** ✅ | Canyonero rebrand + easter eggs |
+| **v0.0.3** | Multi-integration via `integration:` config key; dead-code cleanup; expanded brand wordmarks (Tesla, BMW, Mercedes, Toyota, Volvo, Ford, Hyundai, Kia) |
+| **v0.1.0** | Setup wizard in the editor — device dropdown + section tickboxes — so non-technical users skip YAML entirely |
+| **v0.2.0** | Custom theme presets per brand (Audi anthracite, VW marine, Porsche racing green …) |
+
+Suggestions / bugs → [open an issue](https://github.com/its-me-prash/vag-connect-cards/issues).
 
 ---
 
-## Lizenz
+## 📜 Why "Canyonero"?
 
-MIT — siehe [`LICENSE`](LICENSE).
+[The fictional SUV](https://simpsons.fandom.com/wiki/Canyonero) advertised in *The Simpsons* S9E15. *Twelve yards long, two lanes wide, sixty-five tons of American pride!* The name nods at three favourite shows whose quotes are sprinkled across the codebase as easter eggs. Suit up.
 
-Originale Card-Architektur basiert auf einem MIT-lizenzierten Lovelace-Vorgänger; diese Karte ist davon abgespalten und für Multi-Brand-VAG-Integration komplett umgebaut.
+---
+
+## 📄 License
+
+[MIT](LICENSE).
+
+Original card architecture is derived from an MIT-licensed Lovelace predecessor; this project is a separate evolution focused on multi-brand vehicle integration support. License attribution is preserved in [`LICENSE`](LICENSE).

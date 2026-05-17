@@ -221,10 +221,3 @@ export const windowAttributes = (lang: string) => ({
   ),
 });
 
-// --- Legacy Mercedes shims --------------------------------------------------
-// Kept as no-ops so vehicle-info-card.ts (still mid-migration) keeps
-// compiling. They will be removed in Phase C-2 when the main entry
-// stops calling them.
-export const ignitionState = (lang: string) => createStateMap({}, lang);
-export const starterBattery = (lang: string) => createStateMap({}, lang);
-export const chargeSelectedProgram = (lang: string) => createStateMap({}, lang);

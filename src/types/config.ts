@@ -136,7 +136,10 @@ type CustomCardsUse = {
 };
 
 type ExtraConfigs = {
-  tire_card_custom: {
+  /** @deprecated Mercedes-only tyre-pressure layout — removed in v0.0.3.
+   *  Field kept on the type for back-compat with existing user YAML; the
+   *  card no longer reads it. */
+  tire_card_custom?: {
     background: string;
     horizontal: boolean;
     image_size: number;
@@ -217,6 +220,16 @@ export type SHOW_OPTIONS = {
 export interface VehicleCardConfig extends LovelaceCardConfig, SHOW_OPTIONS {
   type: string;
   entity: string;
+  /**
+   * Which HA car integration to wire the card against. One of the keys
+   * in `INTEGRATION_PRESETS` (`vag_connect`, `tesla_custom`, `mbapi2020`,
+   * `generic`). Defaults to `vag_connect`. Drives both entity discovery
+   * (which `unique_id` suffixes to match) and service invocation
+   * (which `<domain>.<service>` to call from the action buttons).
+   */
+  integration?: string;
+  /** Optional URL of a custom brand logo image shown in the header. */
+  brand_logo_url?: string;
   name?: string;
   device_tracker?: string;
   google_api_key?: string;

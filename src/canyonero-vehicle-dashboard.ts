@@ -36,7 +36,6 @@ import {
   handleCardFirstUpdated,
   getCarEntity,
   handleCardSwipe,
-  convertMinutes,
   isEmpty,
   Create,
   isDarkColor,
@@ -466,6 +465,7 @@ export class Canyonero extends LitElement implements LovelaceCard {
       : undefined;
 
     const brandWordmark = (() => {
+      // VAG group
       if (brand.includes('audi')) return 'AUDI';
       if (brand.includes('škoda') || brand.includes('skoda')) return 'ŠKODA';
       if (brand.includes('cupra')) return 'CUPRA';
@@ -473,7 +473,24 @@ export class Canyonero extends LitElement implements LovelaceCard {
       if (brand.includes('porsche')) return 'PORSCHE';
       if (brand.includes('volkswagen'))
         return brand.includes('us') || brand.includes('na') ? 'VW US' : 'VW';
-      return 'VAG';
+      // Major non-VAG makes
+      if (brand.includes('tesla')) return 'TESLA';
+      if (brand.includes('bmw')) return 'BMW';
+      if (brand.includes('mercedes') || brand.includes('benz')) return 'MERCEDES';
+      if (brand.includes('toyota')) return 'TOYOTA';
+      if (brand.includes('volvo')) return 'VOLVO';
+      if (brand.includes('ford')) return 'FORD';
+      if (brand.includes('hyundai')) return 'HYUNDAI';
+      if (brand.includes('kia')) return 'KIA';
+      if (brand.includes('nissan')) return 'NISSAN';
+      if (brand.includes('mazda')) return 'MAZDA';
+      if (brand.includes('honda')) return 'HONDA';
+      if (brand.includes('subaru')) return 'SUBARU';
+      // Unknown brand → show the literal manufacturer string (uppercased,
+      // capped at 12 chars so it fits the header). Better than a generic
+      // "CAR" — at least the user sees what HA reported.
+      if (brand) return brand.toUpperCase().slice(0, 12);
+      return 'CAR';
     })();
 
     return html`
@@ -1233,70 +1250,24 @@ export class Canyonero extends LitElement implements LovelaceCard {
     const vehicleEntityKey = this.vehicleEntities[key];
 
     if (!vehicleEntityKey) {
-      return this.getFallbackEntityInfo({ key, name, icon, state, unit });
+      return { key, name, icon, state, unit, active: false };
     }
 
     const defaultInfo = this.getDefaultEntityInfo({ key, name, icon, state, unit }, vehicleEntityKey);
 
-    const entityInfoMap = {
-      soc: this.getSocInfo,
-      maxSoc: this.getMaxSocInfo,
-      chargingPower: this.getChargingPowerInfo,
-      parkBrake: this.getParkBrakeInfo,
-      windowsClosed: this.getWindowsClosedInfo,
-      ignitionState: this.getIgnitionStateInfo,
-      lockSensor: this.getLockSensorInfo,
-      starterBatteryState: this.getStarterBatteryInfo,
-    };
-
-    const getInfoFunction = entityInfoMap[key];
-
-    if (getInfoFunction) {
-      return getInfoFunction(defaultInfo, vehicleEntityKey);
-    } else {
-      return this.getWarningOrDefaultInfo(defaultInfo, key, vehicleEntityKey);
+    // Per-key enrichers — currently only SoC (icon picks battery-low/medium/high
+    // based on the percentage) and doorsLocked (lock/lock-open icon based on
+    // binary state). Everything else falls through to default + warning logic.
+    if (key === 'soc' || key === 'targetSoc') {
+      return this.getSocIconInfo(defaultInfo, vehicleEntityKey);
     }
+    if (key === 'doorsLocked') {
+      return this.getLockIconInfo(defaultInfo, vehicleEntityKey);
+    }
+    return this.getWarningOrDefaultInfo(defaultInfo, key, vehicleEntityKey);
   };
 
   /* --------------------------- ENTITY INFO BY KEYS -------------------------- */
-
-  private getFallbackEntityInfo = ({ key, name, icon, state, unit }: EntityConfig): EntityConfig => {
-    const lang = this.userLang;
-
-    let newState = state;
-    let activeState: boolean = false;
-
-    switch (key) {
-      case 'selectedProgram':
-        newState =
-          StateMapping.chargeSelectedProgram(lang)[
-            this.getEntityAttribute(this.vehicleEntities.rangeElectric?.entity_id, 'selectedChargeProgram')
-          ];
-        break;
-
-      case 'doorStatusOverall':
-        const doorStatus = this.getDoorStatusInfo();
-        newState = doorStatus.state;
-        activeState = doorStatus.active;
-        break;
-
-      case 'drivenTimeReset':
-      case 'drivenTimeStart':
-        const entityKey = key === 'drivenTimeReset' ? 'distanceReset' : 'distanceStart';
-        const timeState = this.getEntityAttribute(this.vehicleEntities[entityKey]?.entity_id, key);
-        newState = timeState ? convertMinutes(parseInt(timeState)) : '';
-        break;
-
-      case 'drivenTimeZEReset':
-      case 'drivenTimeZEStart':
-        const zeKey = key === 'drivenTimeZEReset' ? 'distanceZEReset' : 'distanceZEStart';
-        const zeTime = this.getEntityAttribute(this.vehicleEntities[zeKey]?.entity_id, key);
-        newState = zeTime ? convertMinutes(parseInt(zeTime)) : '';
-        break;
-    }
-
-    return { key, name, icon, state: newState, active: activeState, unit };
-  };
 
   private getDefaultEntityInfo = (
     { key, name, icon, state, unit }: EntityConfig,
@@ -1311,162 +1282,24 @@ export class Canyonero extends LitElement implements LovelaceCard {
     };
   };
 
-  private getSocInfo = (defaultInfo: EntityConfig, vehicleEntity: VehicleEntity): EntityConfig => {
+  /** Pick a battery-{low,medium,high} icon for SoC / target-SoC. */
+  private getSocIconInfo = (defaultInfo: EntityConfig, vehicleEntity: VehicleEntity): EntityConfig => {
     const currentState = this.getEntityState(vehicleEntity.entity_id);
     const stateValue = currentState ? parseFloat(currentState) : 0;
     let socIcon: string;
-    if (stateValue < 35) {
-      socIcon = 'mdi:battery-charging-low';
-    } else if (stateValue < 70) {
-      socIcon = 'mdi:battery-charging-medium';
-    } else {
-      socIcon = 'mdi:battery-charging-high';
-    }
+    if (stateValue < 35) socIcon = 'mdi:battery-charging-low';
+    else if (stateValue < 70) socIcon = 'mdi:battery-charging-medium';
+    else socIcon = 'mdi:battery-charging-high';
     return { ...defaultInfo, icon: socIcon };
   };
 
-  private getMaxSocInfo = (defaultInfo: EntityConfig, vehicleEntity: VehicleEntity): EntityConfig => {
-    const maxSocState = this.getEntityState(vehicleEntity.entity_id);
-    const maxSocStateValue = maxSocState ? parseFloat(maxSocState) : 0;
-    const iconValue = Math.round(maxSocStateValue / 10) * 10;
-    const maxSocIcon = `mdi:battery-charging-${iconValue}`;
-
-    return { ...defaultInfo, icon: maxSocIcon };
-  };
-
-  private getChargingPowerInfo = (defaultInfo: EntityConfig, vehicleEntity: VehicleEntity): EntityConfig => {
-    const powerStateDislay = this.getStateDisplay(vehicleEntity.entity_id);
-
-    return { ...defaultInfo, state: powerStateDislay };
-  };
-
-  private getParkBrakeInfo = (defaultInfo: EntityConfig, vehicleEntity: VehicleEntity): EntityConfig => {
-    const parkBrakeState = this.getBooleanState(vehicleEntity.entity_id);
-    const entityState = parkBrakeState
-      ? this.localize('card.common.stateParkBrakeOn')
-      : this.localize('card.common.stateParkBrakeOff');
+  /** Swap the lock-open / lock-closed mdi icon based on the binary state. */
+  private getLockIconInfo = (defaultInfo: EntityConfig, vehicleEntity: VehicleEntity): EntityConfig => {
+    const isUnlocked = this.getBooleanState(vehicleEntity.entity_id); // on = unlocked
     return {
       ...defaultInfo,
-      state: entityState,
-      active: parkBrakeState,
-    };
-  };
-
-  private getDoorStatusInfo = (): { state: string; active: boolean } => {
-    let doorStatusOverall: string;
-    const lang = this.userLang;
-    const doorState = this.getEntityAttribute(this.vehicleEntities.lockSensor?.entity_id, 'doorStatusOverall');
-    const chargeFlapDCStatus = this.getEntityState(this.vehicleEntities.chargeFlapDCStatus?.entity_id);
-
-    let closed = chargeFlapDCStatus === '1' && doorState === '1';
-
-    if (closed) {
-      doorStatusOverall = this.localize('card.common.stateClosed');
-    } else {
-      const doorAttributeStates: Record<string, any> = {};
-      Object.keys(StateMapping.doorAttributes(lang)).forEach((attribute) => {
-        if (attribute === 'chargeflapdcstatus' && this.vehicleEntities.chargeFlapDCStatus?.entity_id !== undefined) {
-          doorAttributeStates[attribute] = this.getEntityState(this.vehicleEntities.chargeFlapDCStatus.entity_id);
-        } else {
-          doorAttributeStates[attribute] = this.getEntityAttribute(
-            this.vehicleEntities.lockSensor.entity_id,
-            attribute
-          );
-        }
-      });
-      const openDoors = Object.keys(doorAttributeStates).filter(
-        (attribute) => doorAttributeStates[attribute] === '0' || doorAttributeStates[attribute] === true
-      ).length;
-      if (openDoors === 0) {
-        closed = true;
-        doorStatusOverall = this.localize('card.common.stateClosed');
-      } else {
-        doorStatusOverall = `${openDoors} ${this.localize('card.common.stateOpen')}`;
-      }
-    }
-
-    return {
-      state: doorStatusOverall,
-      active: closed,
-    };
-  };
-
-  private getWindowsClosedInfo = (defaultInfo: EntityConfig, vehicleEntity: VehicleEntity): EntityConfig => {
-    let windowStateOverall: string;
-    const lang = this.userLang;
-    const sunroofStatus = this.getEntityState(this.vehicleEntities.sunroofStatus?.entity_id);
-    const windowsState = this.getBooleanState(vehicleEntity.entity_id);
-    let closed = sunroofStatus === '0' && windowsState;
-
-    if (closed) {
-      windowStateOverall = this.localize('card.common.stateClosed');
-    } else {
-      const windowAttributeStates: Record<string, any> = {};
-
-      Object.keys(StateMapping.windowAttributes(lang)).forEach((attribute) => {
-        let attributeState: string | boolean | null | undefined;
-        if (attribute === 'sunroofstatus' && this.vehicleEntities.sunroofStatus?.entity_id !== undefined) {
-          attributeState = this.getEntityState(this.vehicleEntities.sunroofStatus.entity_id) === '1' ? true : false;
-        } else {
-          attributeState = this.getEntityAttribute(vehicleEntity.entity_id, attribute);
-        }
-
-        if (attributeState !== undefined && attributeState !== null) {
-          windowAttributeStates[attribute] = attributeState;
-        }
-      });
-
-      const openWindows = Object.keys(windowAttributeStates).filter(
-        (attribute) => windowAttributeStates[attribute] === '0' || windowAttributeStates[attribute] === true
-      ).length;
-
-      if (openWindows === 0) {
-        closed = true;
-        windowStateOverall = this.localize('card.common.stateClosed');
-      } else {
-        windowStateOverall = `${openWindows} ${this.localize('card.common.stateOpen')}`;
-      }
-    }
-    return {
-      ...defaultInfo,
-      state: windowStateOverall,
-      active: closed,
-    };
-  };
-
-  private getIgnitionStateInfo = (defaultInfo: EntityConfig, vehicleEntity: VehicleEntity): EntityConfig => {
-    const realState = this.getEntityState(vehicleEntity.entity_id);
-    const stateStr = StateMapping.ignitionState(this.userLang)[realState] || this.localize('card.common.stateUnknown');
-    const activeState = realState === '0' || realState === '1' ? true : false;
-    return {
-      ...defaultInfo,
-      state: stateStr,
-      active: activeState,
-    };
-  };
-
-  private getLockSensorInfo = (defaultInfo: EntityConfig, vehicleEntity: VehicleEntity): EntityConfig => {
-    const lang = this.userLang;
-    const lockState = this.getEntityState(vehicleEntity.entity_id);
-    const lockStateFormatted = StateMapping.lockStates(lang)[lockState] || StateMapping.lockStates['4'];
-    const lockIcon = lockState === '2' || lockState === '1' ? 'mdi:lock' : 'mdi:lock-open';
-
-    return {
-      ...defaultInfo,
-      icon: lockIcon,
-      state: lockStateFormatted,
-      active: lockState === '2' || lockState === '1' ? true : false,
-    };
-  };
-
-  private getStarterBatteryInfo = (defaultInfo: EntityConfig, vehicleEntity: VehicleEntity): EntityConfig => {
-    const lang = this.userLang;
-    const stateValue = this.getEntityState(vehicleEntity.entity_id);
-    const stateFormated = StateMapping.starterBattery(lang)[stateValue] || 'Unknown';
-
-    return {
-      ...defaultInfo,
-      state: stateFormated,
+      icon: isUnlocked ? 'mdi:lock-open' : 'mdi:lock',
+      active: !isUnlocked,
     };
   };
 
@@ -1561,24 +1394,6 @@ export class Canyonero extends LitElement implements LovelaceCard {
   private toggleMoreInfo(entity: string): void {
     fireEvent(this, 'hass-more-info', { entityId: entity });
   }
-
-  private getMinMaxTyrePressure = (): string => {
-    if (!this.DataKeys.tyrePressures) return '';
-    const pressuresWithUnits = this.DataKeys.tyrePressures.map((key) => ({
-      pressure: this.getEntityState(this.vehicleEntities[key.key]?.entity_id) || '',
-      unit: this.getEntityAttribute(this.vehicleEntities[key.key]?.entity_id, 'unit_of_measurement'),
-    }));
-
-    // Find the minimum and maximum pressures
-    const minPressure = Math.min(...pressuresWithUnits.map(({ pressure }) => parseFloat(pressure)));
-    const maxPressure = Math.max(...pressuresWithUnits.map(({ pressure }) => parseFloat(pressure)));
-
-    // Format the minimum and maximum pressures with their original units
-    const tireUnit = pressuresWithUnits[0]?.unit || '';
-    const formattedMinPressure = minPressure % 1 === 0 ? minPressure.toFixed(0) : minPressure.toFixed(1);
-    const formattedMaxPressure = maxPressure % 1 === 0 ? maxPressure.toFixed(0) : maxPressure.toFixed(1);
-    return `${formattedMinPressure} - ${formattedMaxPressure} ${tireUnit}`;
-  };
 
   public getErrorNotify(cardType: string): boolean {
     if (!this.DataKeys.vehicleWarnings) return false;
