@@ -1,14 +1,14 @@
 <div align="center">
 
-# 🚙 Canyonero Vehicle Dashboard
+<img src="assets/canyonero-logo.png" alt="Canyonero" width="320">
+
+# Canyonero Vehicle Dashboard
 ### The ultimate Home Assistant Lovelace dashboard for your road-going beast
 
 [![GitHub Release](https://img.shields.io/github/v/release/its-me-prash/vag-connect-cards?style=for-the-badge&color=orange)](https://github.com/its-me-prash/vag-connect-cards/releases)
 [![HACS Badge](https://img.shields.io/badge/HACS-Custom-blue?style=for-the-badge)](https://github.com/hacs/integration)
 [![Home Assistant](https://img.shields.io/badge/Home__Assistant-Dashboard-darkblue?style=for-the-badge&logo=home-assistant)](https://www.home-assistant.io)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
-
-<img src="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80" alt="Canyonero Banner" width="100%" style="border-radius: 10px; max-height: 300px; object-fit: cover;">
 
 *"Can you name the truck with four-wheel drive, smells like a steak and seats thirty-five? Canyonero!"*
 
